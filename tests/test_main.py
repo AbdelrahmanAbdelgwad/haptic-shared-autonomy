@@ -1,5 +1,5 @@
-from haptic.__main__ import main
+from haptic.__main__ import add
 
 
 def test_add():
-    assert main(2, 3) == 5
+    assert add(2, 3) == 5
