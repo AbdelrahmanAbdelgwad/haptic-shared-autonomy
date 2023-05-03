@@ -1,3 +1,7 @@
+def add(x, y):
+    return x + y
+
+
 if __name__ == "__main__":
     import gym
     from stable_baselines3 import PPO
