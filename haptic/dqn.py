@@ -11,7 +11,9 @@ import torch
 import gnwrapper
 import gym
 from gym import logger as gymlogger
-from gym.wrappers import Monitor
+# from gym.wrappers import Monitor
+from gym.wrappers.record_video import RecordVideo
+
 
 gymlogger.set_level(30)
 import glob
@@ -189,7 +191,7 @@ LOAD_SAVED_MODEL = False
 # wandb.run.name = WNDB_NAME
 
 # Use wrappers.Monitor in order to have a video
-env = gym.wrappers.Monitor(CarRacingDiscrete(NUM_OF_STEPS), "./video", force=True)
+env = RecordVideo(CarRacingDiscrete(NUM_OF_STEPS),'./video',  episode_trigger = lambda episode_number: True)
 
 # Load model
 if LOAD_SAVED_MODEL:
