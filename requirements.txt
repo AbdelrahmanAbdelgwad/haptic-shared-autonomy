@@ -1,1 +1,15 @@
 pytest-pythonpath
+ale_py==0.7.4
+gym==0.21.0
+gym_notebook_wrapper==1.3.3
+ipython==8.12.0
+matplotlib==3.7.1
+numpy==1.24.2
+opencv_python==4.7.0.72
+Pillow==9.5.0
+PyVirtualDisplay==3.0
+stable_baselines3==1.8.0
+torch==2.0.0
+wandb==0.14.2
+Box2D==2.3.10
+pyglet==1.5.27

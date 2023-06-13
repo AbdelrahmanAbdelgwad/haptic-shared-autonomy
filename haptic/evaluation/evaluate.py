@@ -9,7 +9,7 @@ import base64
 from IPython.display import HTML
 from IPython import display as ipythondisplay
 
-import wandb
+# import wandb
 
 
 def evaluate_version(model, env, version_name, version, video_path):
@@ -66,7 +66,7 @@ def evaluate_version(model, env, version_name, version, video_path):
 
 
 from stable_baselines3 import DQN
-from car_racer_gym.car_racing import CarRacingDiscrete
+from envs.car_racing import CarRacingDiscrete
 
 env = CarRacingDiscrete(1000)
 
