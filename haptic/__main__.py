@@ -174,11 +174,11 @@ if __name__ == "__main__":
     from stable_baselines3.dqn import CnnPolicy
 
     NUM = 54
-    NUM_OF_STEPS = 100
-    NUM_OF_EPISODES = 1
+    NUM_OF_STEPS = 100000
+    NUM_OF_EPISODES = 20
     LOG_INTERVAL = 50
-    BUFFER_SIZE = 5000
-    LEARNING_STARTS = 5000
+    BUFFER_SIZE = 1000000
+    LEARNING_STARTS = 50000
     # WANDB_ID = "spympr" + str(NUM)
     # WNDB_NAME = "SPYROS" + str(NUM)
     MODEL_SAVE_NAME = "DQN_RL_" + str(NUM)
