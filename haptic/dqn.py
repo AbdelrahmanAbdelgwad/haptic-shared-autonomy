@@ -24,7 +24,7 @@ from datetime import datetime
 from IPython.display import HTML
 from IPython import display as ipythondisplay
 from pyvirtualdisplay import Display
-from car_racer_gym.car_racing import CarRacingDiscrete
+from car_racing import CarRacingDiscrete
 
 # import wandb
 import time
