@@ -22,12 +22,12 @@ from pyglet import gl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-def rgb2gray(rgb):
-    gray_image = np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140])
-    gray_image = gray_image.astype(np.uint8)
-    return gray_image
-    
 
+def rgb2gray(rgb):
+    gray_image = np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
+    gray_image = gray_image.astype(np.uint8)
+    gray_image = np.reshape(gray_image, (96, 96, 1))
+    return gray_image
 
 
 # Easiest continuous control task to learn from pixels, a top-down racing environment.
@@ -175,7 +175,7 @@ class CarRacingDiscrete(gym.Env, EzPickle):
         self.current_steps = 0
 
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(STATE_W, STATE_H, 1), dtype=np.uint8
+            low=0, high=255, shape=(STATE_W, STATE_H, 1), dtype=np.uint8
         )
 
     def seed(self, seed=None):
@@ -410,7 +410,7 @@ class CarRacingDiscrete(gym.Env, EzPickle):
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
         self.t += 1.0 / FPS
 
-        img = self.render("state_pixels") 
+        img = self.render("state_pixels")
         self.state = rgb2gray(img)
 
         step_reward = 0
@@ -632,7 +632,7 @@ class CarRacing(gym.Env, EzPickle):
         self.total_episode_steps = total_episode_steps
         self.current_steps = 0
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(STATE_W, STATE_H, 1), dtype=np.uint8
+            low=0, high=255, shape=(STATE_W, STATE_H, 1), dtype=np.uint8
         )
 
     def seed(self, seed=None):
@@ -866,7 +866,7 @@ class CarRacing(gym.Env, EzPickle):
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
         self.t += 1.0 / FPS
 
-        img = self.render("state_pixels") 
+        img = self.render("state_pixels")
         self.state = rgb2gray(img)
 
         step_reward = 0

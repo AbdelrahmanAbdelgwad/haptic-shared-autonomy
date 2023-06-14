@@ -12,9 +12,9 @@ if __name__ == "__main__":
     import gnwrapper
     import gym
     from gym import logger as gymlogger
+
     # from gym.wrappers import Monitor
     from gym.wrappers.record_video import RecordVideo
-
 
     gymlogger.set_level(30)
     import glob
@@ -38,7 +38,6 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
 
-
     env = gnwrapper.Animation(CarRacingDiscrete())
     env = CarRacingDiscrete()
 
@@ -46,20 +45,16 @@ if __name__ == "__main__":
     env.render()
     im = env.render("state_pixels")
 
-
     def state_image_preprocess(state_image):
         state_image = state_image.transpose((2, 0, 1))
         state_image = np.ascontiguousarray(state_image, dtype=np.float32) / 255
         state_image = torch.from_numpy(state_image)
         return state_image.unsqueeze(0).to(device)
 
-
     state_image_preprocess(im).shape
     plt.imshow(state_image_preprocess(im).cpu().squeeze(0).permute(1, 2, 0).numpy())
 
-
     from stable_baselines3.common.callbacks import BaseCallback
-
 
     class DQNCustomCallback(BaseCallback):
         """
@@ -152,20 +147,18 @@ if __name__ == "__main__":
             """
             pass
 
-
     from stable_baselines3 import DQN
     from stable_baselines3.dqn import CnnPolicy
 
     NUM = 54
-    NUM_OF_STEPS = 1_000
-    NUM_OF_EPISODES = 1
+    NUM_OF_STEPS = 1_000_000
+    NUM_OF_EPISODES = 10
     LOG_INTERVAL = 50
-    BUFFER_SIZE = 1000000
+    BUFFER_SIZE = 50000
     LEARNING_STARTS = 50000
     MODEL_SAVE_NAME = "DQN_RL_" + str(NUM)
     SAVED_MODEL_VERSION = "latest"
     LOAD_SAVED_MODEL = False
-
 
     # Use wrappers.Monitor in order to have a video
     # env = RecordVideo(CarRacingDiscrete(NUM_OF_STEPS),'./video',  episode_trigger = lambda episode_number: True)
@@ -186,7 +179,7 @@ if __name__ == "__main__":
         else:
             DQNmodel = DQN.load(MODEL_SAVE_NAME, env=env)
             print("CONTINUE DQN MODEL TRAINING")
- 
+
     t1 = time.time()
     # Train model
     DQNmodel.learn(
@@ -195,6 +188,6 @@ if __name__ == "__main__":
     t2 = time.time()
     dt = t2 - t1
     time_in_hours = (dt / 1000) / 60 / 60
-    print("\n","training time was" , time_in_hours, "\n")
+    print("\n", "training time was", time_in_hours, "\n")
     # Save model
-    DQNmodel.save("DQN_model_gray")
+    DQNmodel.save("DQN_model_gray_1MSTEPS_10EPS")
