@@ -30,8 +30,6 @@ if __name__ == "__main__":
     from IPython import display as ipythondisplay
     from pyvirtualdisplay import Display
     from envs.car_racing import CarRacingDiscrete
-
-    # import wandb
     import time
 
     is_ipython = "inline" in matplotlib.get_backend()
@@ -113,21 +111,11 @@ if __name__ == "__main__":
             self.total_episode_reward += self.locals["reward"]
             # at the end of every episode
             if self.locals["done"][0]:
-                # log the reward value if its time to not log 2 times
-                # if self.episodes % self.locals["log_interval"] != 0:
-                # wandb.log({"reward_per_episode": self.total_episode_reward})
-
                 # if log interval has passed
                 if self.episodes % self.locals["log_interval"] == 0:
-                    # log at wandb and print the last video
+                    # Print the last video
                     # Save your model and optimizer
                     self.model.save(MODEL_SAVE_NAME)
-                    # Save as artifact for version control.
-                    # artifact = wandb.Artifact(MODEL_SAVE_NAME, type="model")
-                    # artifact.add_file(MODEL_SAVE_NAME + ".zip")
-                    # wandb.log_artifact(artifact)
-                    # wandb.log({"reward_per_episode": self.total_episode_reward})
-
                     mp4list = glob.glob("video/*.mp4")
                     print(mp4list)
                     if len(mp4list) > 0:
@@ -135,9 +123,6 @@ if __name__ == "__main__":
                         mp4 = mp4list[-1]
                         video = io.open(mp4, "r+b").read()
                         encoded = base64.b64encode(video)
-
-                        # log gameplay video in wandb
-                        # wandb.log({"gameplays": wandb.Video(mp4, fps=4, format="gif")})
 
                         # display gameplay video
                         ipythondisplay.clear_output(wait=True)
@@ -174,39 +159,21 @@ if __name__ == "__main__":
     from stable_baselines3.dqn import CnnPolicy
 
     NUM = 54
-    NUM_OF_STEPS = 100000
-    NUM_OF_EPISODES = 20
+    NUM_OF_STEPS = 1_000_000
+    NUM_OF_EPISODES = 10
     LOG_INTERVAL = 50
     BUFFER_SIZE = 1000000
     LEARNING_STARTS = 50000
-    # WANDB_ID = "spympr" + str(NUM)
-    # WNDB_NAME = "SPYROS" + str(NUM)
     MODEL_SAVE_NAME = "DQN_RL_" + str(NUM)
     SAVED_MODEL_VERSION = "latest"
     LOAD_SAVED_MODEL = False
 
-    # Process to connect to weights and biases account
-    # wnadb api key: 00d5bfbd342bb73d5aaf4f2833436d20457ef040
-    # os.environ["WANDB_ENTITY"] = "andreas_giannoutsos"
-    # os.environ["WANDB_PROJECT"] = "gym_car_racer"
-    # os.environ["WANDB_RESUME"] = "allow"
-    # wandb.init(resume=WANDB_ID)
-    # wandb.run.name = WNDB_NAME
 
     # Use wrappers.Monitor in order to have a video
     # env = RecordVideo(CarRacingDiscrete(NUM_OF_STEPS),'./video',  episode_trigger = lambda episode_number: True)
     env = CarRacingDiscrete(NUM_OF_STEPS)
     # Load model
     if LOAD_SAVED_MODEL:
-        # try:
-        # model_artifact = wandb.use_artifact(
-        #     MODEL_SAVE_NAME + ":" + SAVED_MODEL_VERSION, type="model"
-        # )
-        # artifact_dir = model_artifact.download()
-        # DQNmodel = DQN.load(artifact_dir + "/" + MODEL_SAVE_NAME, env=env)
-        # print("LOAD SAVED DQN MODEL")
-        # except:
-        # print("NO MODEL FOUND")
         DQN.load("DQN_model", env=env)
     else:
         if "DQNmodel" not in globals():
