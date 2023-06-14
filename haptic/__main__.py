@@ -188,11 +188,15 @@ if __name__ == "__main__":
         else:
             DQNmodel = DQN.load(MODEL_SAVE_NAME, env=env)
             print("CONTINUE DQN MODEL TRAINING")
-
+ 
+    t1 = time.time()
     # Train model
     DQNmodel.learn(
         total_timesteps=NUM_OF_STEPS * NUM_OF_EPISODES, log_interval=LOG_INTERVAL
     )
-
+    t2 = time.time()
+    dt = t2 - t1
+    time_in_hours = ((dt / 1000) / 60) / 60
+    print("\n","training time was" , time_in_hours, "\n")
     # Save model
-    DQNmodel.save("DQN_model")
+    DQNmodel.save("DQN_model_1MSTEPS_10EPS")
