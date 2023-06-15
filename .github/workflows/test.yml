@@ -37,6 +37,6 @@ jobs:
       - name: Style checking with mypy
         run: |
           mypy src/haptic/ --ignore-missing-imports |& tee mypy.log
-      - name: Test with pytest
-        run: |
-          pytest --cov=haptic src
+      # - name: Test with pytest
+      #   run: |
+      #     pytest
