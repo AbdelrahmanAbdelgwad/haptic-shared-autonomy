@@ -28,12 +28,12 @@ jobs:
 
       - name: Pylint Style Checker
         run: |
-          pylint src/highrl/ --disable=no-member |& tee pylint.txt
+          pylint src/haptic/ --disable=no-member |& tee pylint.txt
           echo "$PIPESTATUS" >> pylint_status.txt
 
       - name: Mypy Style Checker
         run: |
-          mypy src/highrl/ --ignore-missing-imports |& tee mypy.txt
+          mypy src/haptic/ --ignore-missing-imports |& tee mypy.txt
           echo "$PIPESTATUS" >> mypy_status.txt
 
       - name: Parsing linters
