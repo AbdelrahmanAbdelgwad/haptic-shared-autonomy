@@ -10,6 +10,6 @@ opencv_python==4.7.0.68
 Pillow==9.5.0
 pyglet==1.5.26
 PyVirtualDisplay==3.0
-stable_baselines3==1.6.0
+stable_baselines3==2.0.0a13
 torch==1.13.1
-gym
+gym==0.21.0
