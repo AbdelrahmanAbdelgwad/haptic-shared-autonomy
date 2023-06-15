@@ -39,4 +39,4 @@ jobs:
           mypy src/haptic/ --ignore-missing-imports |& tee mypy.log
       - name: Test with pytest
         run: |
-          pytest
+          pytest --cov=haptic src
