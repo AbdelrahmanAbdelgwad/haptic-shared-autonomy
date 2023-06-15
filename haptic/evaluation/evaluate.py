@@ -71,7 +71,7 @@ from envs.car_racing import CarRacingDiscrete
 env = CarRacingDiscrete(1000)
 
 # Model with 10.000 steps has best performance at 566 episode (566/20~=28)
-evaluate_version(DQN, env, "DQN_model", "v28", "./videoo")
+evaluate_version(DQN, env, "DQN_model_1MSTEPS_10EPS", "v28", "./videoo")
 
 # Model with 2.000 steps has best performance at 798 episode (800/50~=15)
 # evaluate_version(DQN, env, "DQN_RL_48", "v15", "./videoo")
