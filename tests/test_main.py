@@ -1,4 +1,5 @@
 from haptic.__main__ import add
+from haptic.envs.car_racing import CarRacingDiscrete
 
 # from haptic.env.car_racer_env import subtract
 
