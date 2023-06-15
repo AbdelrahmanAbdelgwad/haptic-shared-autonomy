@@ -1,5 +1,6 @@
 from src.haptic.__main__ import add
-from src.haptic.envs.car_racing import CarRacingDiscrete
+
+# from src.haptic.envs.car_racing import CarRacingDiscrete
 
 
 def test_add():
