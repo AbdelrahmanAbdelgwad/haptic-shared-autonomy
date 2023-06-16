@@ -116,6 +116,7 @@ FORBID_HARD_TURNS_IN_INTERSECTIONS = False
 
 
 def key_press_example(k, mod):
+    from pyglet.window import key 
     """
     Example callback function
     """
@@ -125,6 +126,7 @@ def key_press_example(k, mod):
 
 
 def key_release_example(k, mod):
+    from pyglet.window import key
     """
     Example callback function
     """
