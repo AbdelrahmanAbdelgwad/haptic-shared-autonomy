@@ -5,7 +5,7 @@ import numpy as np
 __all__ = ["FlattenDictWrapper"]
 
 
-class FlattenDictWrapper(haptic.gym.ObservationWrapper):
+class FlattenDictWrapper(gym.ObservationWrapper):
     """Flattens selected keys of a Dict observation space into
     an array.
     """
