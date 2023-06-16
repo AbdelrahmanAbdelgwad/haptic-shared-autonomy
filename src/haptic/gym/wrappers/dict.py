@@ -1,4 +1,4 @@
-import haptic.gym
+import haptic.gym as gym
 import numpy as np
 
 

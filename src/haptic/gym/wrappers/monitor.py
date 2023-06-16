@@ -1,4 +1,4 @@
-import haptic.gym
+import haptic.gym as gym
 from haptic.gym import Wrapper
 from haptic.gym import error, version, logger
 import os, json, numpy as np, six
