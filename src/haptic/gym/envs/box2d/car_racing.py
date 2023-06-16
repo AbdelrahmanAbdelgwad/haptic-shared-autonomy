@@ -2155,7 +2155,7 @@ class CarRacing(gym.Env, EzPickle):
             state = self.render("HD")
         if state is not None:
             for f in range(self.frames_per_state):
-                if self.frames_per_state == 1 or quality is not "low":
+                if self.frames_per_state == 1 or quality != "low":
                     frame_str = ""
                     frame = state
                 else:

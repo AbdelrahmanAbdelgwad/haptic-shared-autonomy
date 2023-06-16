@@ -1,7 +1,7 @@
 from pdb import set_trace
 from haptic.gym import logger
 
-import haptic.gym
+import haptic.gym as gym
 from haptic.gym import error
 from haptic.gym.utils import closer
 
