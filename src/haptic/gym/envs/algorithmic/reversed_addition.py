@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
-from gym.envs.algorithmic import algorithmic_env
+from haptic.gym.envs.algorithmic import algorithmic_env
+
 
 class ReversedAdditionEnv(algorithmic_env.GridAlgorithmicEnv):
     def __init__(self, rows=2, base=3):
@@ -27,4 +28,4 @@ class ReversedAdditionEnv(algorithmic_env.GridAlgorithmicEnv):
         # unsolvable, since agents aren't even given enough time steps to look at
         # all the digits. (The solutions on the scoreboard seem to only work by
         # save-scumming.)
-        return self.input_width*2 + 4
+        return self.input_width * 2 + 4

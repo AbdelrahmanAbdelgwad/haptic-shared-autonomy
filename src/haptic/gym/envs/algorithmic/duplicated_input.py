@@ -3,7 +3,8 @@ Task is to return every nth character from the input tape.
 http://arxiv.org/abs/1511.07275
 """
 from __future__ import division
-from gym.envs.algorithmic import algorithmic_env
+from haptic.gym.envs.algorithmic import algorithmic_env
+
 
 class DuplicatedInputEnv(algorithmic_env.TapeAlgorithmicEnv):
     def __init__(self, duplication=2, base=5):
@@ -14,7 +15,7 @@ class DuplicatedInputEnv(algorithmic_env.TapeAlgorithmicEnv):
         res = []
         if size < self.duplication:
             size = self.duplication
-        for i in range(size//self.duplication):
+        for i in range(size // self.duplication):
             char = self.np_random.randint(self.base)
             for _ in range(self.duplication):
                 res.append(char)

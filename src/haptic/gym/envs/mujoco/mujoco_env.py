@@ -1,22 +1,26 @@
 import os
 
-from gym import error, spaces
-from gym.utils import seeding
+from haptic.gym import error, spaces
+from haptic.gym.utils import seeding
 import numpy as np
 from os import path
-import gym
+import haptic.gym as gym
 import six
 
 try:
     import mujoco_py
 except ImportError as e:
-    raise error.DependencyNotInstalled("{}. (HINT: you need to install mujoco_py, and also perform the setup instructions here: https://github.com/openai/mujoco-py/.)".format(e))
+    raise error.DependencyNotInstalled(
+        "{}. (HINT: you need to install mujoco_py, and also perform the setup instructions here: https://github.com/openai/mujoco-py/.)".format(
+            e
+        )
+    )
 
 DEFAULT_SIZE = 500
 
+
 class MujocoEnv(gym.Env):
-    """Superclass for all MuJoCo environments.
-    """
+    """Superclass for all MuJoCo environments."""
 
     def __init__(self, model_path, frame_skip):
         if model_path.startswith("/"):
@@ -33,8 +37,8 @@ class MujocoEnv(gym.Env):
         self._viewers = {}
 
         self.metadata = {
-            'render.modes': ['human', 'rgb_array', 'depth_array'],
-            'video.frames_per_second': int(np.round(1.0 / self.dt))
+            "render.modes": ["human", "rgb_array", "depth_array"],
+            "video.frames_per_second": int(np.round(1.0 / self.dt)),
         }
 
         self.init_qpos = self.sim.data.qpos.ravel().copy()
@@ -48,7 +52,7 @@ class MujocoEnv(gym.Env):
         high = bounds[:, 1]
         self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
-        high = np.inf*np.ones(self.obs_dim)
+        high = np.inf * np.ones(self.obs_dim)
         low = -high
         self.observation_space = spaces.Box(low, high, dtype=np.float32)
 
@@ -86,8 +90,9 @@ class MujocoEnv(gym.Env):
     def set_state(self, qpos, qvel):
         assert qpos.shape == (self.model.nq,) and qvel.shape == (self.model.nv,)
         old_state = self.sim.get_state()
-        new_state = mujoco_py.MjSimState(old_state.time, qpos, qvel,
-                                         old_state.act, old_state.udd_state)
+        new_state = mujoco_py.MjSimState(
+            old_state.time, qpos, qvel, old_state.act, old_state.udd_state
+        )
         self.sim.set_state(new_state)
         self.sim.forward()
 
@@ -100,21 +105,21 @@ class MujocoEnv(gym.Env):
         for _ in range(n_frames):
             self.sim.step()
 
-    def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE):
-        if mode == 'rgb_array':
+    def render(self, mode="human", width=DEFAULT_SIZE, height=DEFAULT_SIZE):
+        if mode == "rgb_array":
             self._get_viewer(mode).render(width, height)
             # window size used for old mujoco-py:
             data = self._get_viewer(mode).read_pixels(width, height, depth=False)
             # original image is upside-down, so flip it
             return data[::-1, :, :]
-        elif mode == 'depth_array':
+        elif mode == "depth_array":
             self._get_viewer(mode).render(width, height)
             # window size used for old mujoco-py:
             # Extract depth part of the read_pixels() tuple
             data = self._get_viewer(mode).read_pixels(width, height, depth=True)[1]
             # original image is upside-down, so flip it
             return data[::-1, :]
-        elif mode == 'human':
+        elif mode == "human":
             self._get_viewer(mode).render()
 
     def close(self):
@@ -126,11 +131,11 @@ class MujocoEnv(gym.Env):
     def _get_viewer(self, mode):
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
-            if mode == 'human':
+            if mode == "human":
                 self.viewer = mujoco_py.MjViewer(self.sim)
-            elif mode == 'rgb_array' or mode == 'depth_array':
+            elif mode == "rgb_array" or mode == "depth_array":
                 self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, -1)
-                
+
             self.viewer_setup()
             self._viewers[mode] = self.viewer
         return self.viewer
@@ -139,7 +144,4 @@ class MujocoEnv(gym.Env):
         return self.data.get_body_xpos(body_name)
 
     def state_vector(self):
-        return np.concatenate([
-            self.sim.data.qpos.flat,
-            self.sim.data.qvel.flat
-        ])
+        return np.concatenate([self.sim.data.qpos.flat, self.sim.data.qvel.flat])

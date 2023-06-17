@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from gym.envs.toy_text import discrete
+from haptic.gym.envs.toy_text import discrete
 
 UP = 0
 RIGHT = 1
@@ -16,7 +16,7 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
     Adapted from Example 6.6 (page 132) from Reinforcement Learning: An Introduction
     by Sutton and Barto:
     http://incompleteideas.net/book/the-book-2nd.html
-    
+
     With inspiration from:
     https://github.com/dennybritz/reinforcement-learning/blob/master/lib/envs/cliff_walking.py
 
@@ -25,10 +25,11 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
         [3, 11] as the goal at bottom-right
         [3, 1..10] as the cliff at bottom-center
 
-    Each time step incurs -1 reward, and stepping into the cliff incurs -100 reward 
+    Each time step incurs -1 reward, and stepping into the cliff incurs -100 reward
     and a reset to the start. An episode terminates when the agent reaches the goal.
     """
-    metadata = {'render.modes': ['human', 'ansi']}
+
+    metadata = {"render.modes": ["human", "ansi"]}
 
     def __init__(self):
         self.shape = (4, 12)
@@ -61,8 +62,8 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
     def _limit_coordinates(self, coord):
         """
         Prevent the agent from falling out of the grid world
-        :param coord: 
-        :return: 
+        :param coord:
+        :return:
         """
         coord[0] = min(coord[0], self.shape[0] - 1)
         coord[0] = max(coord[0], 0)
@@ -72,8 +73,8 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
 
     def _calculate_transition_prob(self, current, delta):
         """
-        Determine the outcome for an action. Transition Prob is always 1.0. 
-        :param current: Current position on the grid as (row, col) 
+        Determine the outcome for an action. Transition Prob is always 1.0.
+        :param current: Current position on the grid as (row, col)
         :param delta: Change in position for transition
         :return: (1.0, new_state, reward, done)
         """
@@ -87,7 +88,7 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
         is_done = tuple(new_position) == terminal_state
         return [(1.0, new_state, -1, is_done)]
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         outfile = sys.stdout
 
         for s in range(self.nS):
@@ -106,8 +107,7 @@ class CliffWalkingEnv(discrete.DiscreteEnv):
                 output = output.lstrip()
             if position[1] == self.shape[1] - 1:
                 output = output.rstrip()
-                output += '\n'
+                output += "\n"
 
             outfile.write(output)
-        outfile.write('\n')
-
+        outfile.write("\n")

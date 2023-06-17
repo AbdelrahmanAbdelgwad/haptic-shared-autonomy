@@ -1,9 +1,11 @@
-import gym
-from gym import spaces
-from gym.utils import seeding
+import haptic.gym as gym
+from haptic.gym import spaces
+from haptic.gym.utils import seeding
+
 
 def cmp(a, b):
     return float(a > b) - float(a < b)
+
 
 # 1 = Ace, 2-10 = Number cards, Jack/Queen/King = 10
 deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
@@ -70,12 +72,12 @@ class BlackjackEnv(gym.Env):
     by Sutton and Barto.
     http://incompleteideas.net/book/the-book-2nd.html
     """
+
     def __init__(self, natural=False):
         self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Tuple((
-            spaces.Discrete(32),
-            spaces.Discrete(11),
-            spaces.Discrete(2)))
+        self.observation_space = spaces.Tuple(
+            (spaces.Discrete(32), spaces.Discrete(11), spaces.Discrete(2))
+        )
         self.seed()
 
         # Flag to payout 1.5 on a "natural" blackjack win, like casino rules

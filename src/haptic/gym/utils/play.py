@@ -1,10 +1,11 @@
-import gym
+import haptic.gym as gym
 import pygame
 import sys
 import time
 import matplotlib
+
 try:
-    matplotlib.use('GTK3Agg')
+    matplotlib.use("GTK3Agg")
     import matplotlib.pyplot as plt
 except Exception:
     pass
@@ -16,12 +17,14 @@ from collections import deque
 from pygame.locals import HWSURFACE, DOUBLEBUF, RESIZABLE, VIDEORESIZE
 from threading import Thread
 
+
 def display_arr(screen, arr, video_size, transpose):
     arr_min, arr_max = arr.min(), arr.max()
     arr = 255.0 * (arr - arr_min) / (arr_max - arr_min)
     pyg_img = pygame.surfarray.make_surface(arr.swapaxes(0, 1) if transpose else arr)
     pyg_img = pygame.transform.scale(pyg_img, video_size)
-    screen.blit(pyg_img, (0,0))
+    screen.blit(pyg_img, (0, 0))
+
 
 def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=None):
     """Allows one to play the game using keyboard.
@@ -82,17 +85,20 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
 
     obs_s = env.observation_space
     assert type(obs_s) == gym.spaces.box.Box
-    assert len(obs_s.shape) == 2 or (len(obs_s.shape) == 3 and obs_s.shape[2] in [1,3])
+    assert len(obs_s.shape) == 2 or (len(obs_s.shape) == 3 and obs_s.shape[2] in [1, 3])
 
     if keys_to_action is None:
-        if hasattr(env, 'get_keys_to_action'):
+        if hasattr(env, "get_keys_to_action"):
             keys_to_action = env.get_keys_to_action()
-        elif hasattr(env.unwrapped, 'get_keys_to_action'):
+        elif hasattr(env.unwrapped, "get_keys_to_action"):
             keys_to_action = env.unwrapped.get_keys_to_action()
         else:
-            assert False, env.spec.id + " does not have explicit key to action mapping, " + \
-                          "please specify one manually"
-    relevant_keys = set(sum(map(list, keys_to_action.keys()),[]))
+            assert False, (
+                env.spec.id
+                + " does not have explicit key to action mapping, "
+                + "please specify one manually"
+            )
+    relevant_keys = set(sum(map(list, keys_to_action.keys()), []))
 
     if transpose:
         video_size = env.observation_space.shape[1], env.observation_space.shape[0]
@@ -108,7 +114,6 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
 
     screen = pygame.display.set_mode(video_size)
     clock = pygame.time.Clock()
-
 
     while running:
         if env_done:
@@ -149,6 +154,7 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
         clock.tick(fps)
     pygame.quit()
 
+
 class PlayPlot(object):
     def __init__(self, callback, horizon_timesteps, plot_names):
         self.data_callback = callback
@@ -163,7 +169,7 @@ class PlayPlot(object):
             axis.set_title(name)
         self.t = 0
         self.cur_plot = [None for _ in range(num_plots)]
-        self.data     = [deque(maxlen=horizon_timesteps) for _ in range(num_plots)]
+        self.data = [deque(maxlen=horizon_timesteps) for _ in range(num_plots)]
 
     def callback(self, obs_t, obs_tp1, action, rew, done, info):
         points = self.data_callback(obs_t, obs_tp1, action, rew, done, info)
@@ -181,6 +187,6 @@ class PlayPlot(object):
         plt.pause(0.000001)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     env = gym.make("MontezumaRevengeNoFrameskip-v4")
     play(env, zoom=4, fps=60)

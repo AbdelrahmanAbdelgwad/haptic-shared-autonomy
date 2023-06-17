@@ -153,7 +153,7 @@ class EnvRegistry(object):
         ):
             patch_deprecated_methods(env)
         if (env.spec.timestep_limit is not None) and not spec.tags.get("vnc"):
-            from gym.wrappers.time_limit import TimeLimit
+            from haptic.gym.wrappers.time_limit import TimeLimit
 
             env = TimeLimit(
                 env,
