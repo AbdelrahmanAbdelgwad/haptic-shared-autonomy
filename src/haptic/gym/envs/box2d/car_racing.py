@@ -116,7 +116,8 @@ FORBID_HARD_TURNS_IN_INTERSECTIONS = False
 
 
 def key_press_example(k, mod):
-    from pyglet.window import key 
+    from pyglet.window import key
+
     """
     Example callback function
     """
@@ -127,6 +128,7 @@ def key_press_example(k, mod):
 
 def key_release_example(k, mod):
     from pyglet.window import key
+
     """
     Example callback function
     """
@@ -426,7 +428,7 @@ class CarRacing(gym.Env, EzPickle):
             "HARD_ACCELERATE",
             "SOFT_BREAK",
             "HARD_BREAK",
-        )  # Not implemented
+        )
         self.fd_tile = fixtureDef(
             shape=polygonShape(vertices=[(0, 0), (1, 0), (1, -1), (0, -1)])
         )
@@ -531,7 +533,9 @@ class CarRacing(gym.Env, EzPickle):
 
         # not including "soft" because it is not implemented yet
         self.discretize_actions = (
-            discretize_actions if discretize_actions in [None, "hard"] else "hard"
+            discretize_actions
+            if discretize_actions in [None, "hard", "soft"]
+            else "hard"
         )
 
         if max_step_reward < min_step_reward:
@@ -1926,7 +1930,26 @@ class CarRacing(gym.Env, EzPickle):
 
     def _transform_action(self, action):
         if self.discretize_actions == "soft":
-            raise NotImplementedError
+            # "NOTHING", "SOFT_LEFT", "HARD_LEFT", "SOFT_RIGHT", "HARD_RIGHT",
+            # "SOFT_ACCELERATE", "HARD_ACCELERATE", "SOFT_BREAK", "HARD_BREAK"
+            if action == 0:
+                action = [0, 0, 0.0]  # NOTHING
+            if action == 1:
+                action = [-0.5, 0, 0.0]  # SOFT_LEFT
+            if action == 2:
+                action = [-1, 0, 0.0]  # HARD_LEFT
+            if action == 3:
+                action = [+0.5, 0, 0.0]  # SOFT_RIGHT
+            if action == 4:
+                action = [+1, 0, 0.0]  # HARD_RIGHT
+            if action == 5:
+                action = [0, +0.5, 0.0]  # SOFT_ACCELERATE
+            if action == 6:
+                action = [0, +1, 0.0]  # HARD_ACCELERATE
+            if action == 7:
+                action = [0, 0, 0.4]  # SOFT_BREAK
+            if action == 8:
+                action = [0, 0, 0.8]  # HARD_BREAK
         elif self.discretize_actions == "hard":
             # ("NOTHING", "LEFT", "RIGHT", "ACCELERATE", "BREAK")
             # angle, gas, break

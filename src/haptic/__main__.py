@@ -22,7 +22,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.dqn import CnnPolicy
 
 NUM = 54
-NUM_OF_STEPS = 1_000
+NUM_OF_STEPS = 1_000_000
 NUM_OF_EPISODES = 1
 LOG_INTERVAL = 50
 BUFFER_SIZE = 50000
@@ -141,13 +141,15 @@ def main():
         allow_reverse=False,
         grayscale=1,
         show_info_panel=1,
-        discretize_actions="hard",
+        discretize_actions="soft",
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
-        max_time_out=0,
+        max_time_out=2,
         frames_per_state=4,
     )
+    # print(env.action_space.shape)
+    # print(env.action_space)
 
     # env.reset()
     # env.render()
@@ -193,7 +195,7 @@ def main():
     time_in_hours = ((dt / 1000) / 60) / 60
     print("\n", "training time was", time_in_hours, "\n")
     # Save model
-    DQNmodel.save("DQN_model")
+    DQNmodel.save("DQN_model_hard_actions")
 
 
 if __name__ == "__main__":
