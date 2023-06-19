@@ -29,7 +29,8 @@ BUFFER_SIZE = 50000
 LEARNING_STARTS = 50000
 MODEL_SAVE_NAME = "DQN_RL_" + str(NUM)
 SAVED_MODEL_VERSION = "latest"
-LOAD_SAVED_MODEL = False
+LOAD_SAVED_MODEL = True
+
 
 
 class DQNCustomCallback(BaseCallback):
@@ -169,7 +170,7 @@ def main():
     # env = CarRacingDiscrete(NUM_OF_STEPS)
     # Load model
     if LOAD_SAVED_MODEL:
-        DQN.load("DQN_model", env=env)
+        DQNmodel = DQN.load("DQN_model_hard_actions", env=env)
     else:
         if "DQNmodel" not in globals():
             DQNmodel = DQN(
@@ -195,7 +196,7 @@ def main():
     time_in_hours = ((dt / 1000) / 60) / 60
     print("\n", "training time was", time_in_hours, "\n")
     # Save model
-    DQNmodel.save("DQN_model_hard_actions")
+    DQNmodel.save("DQN_model_hard_actions_2")
 
 
 if __name__ == "__main__":
