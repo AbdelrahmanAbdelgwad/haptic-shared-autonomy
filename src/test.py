@@ -16,7 +16,7 @@ env = CarRacing(
 # Uncomment following line to save video of our Agent interacting in this environment
 # This can be used for debugging and studying how our agent is performing
 env = gym.wrappers.Monitor(env, "./video/", force=True)
-model = DQN.load("DQN_model_hard_actions")
+model = DQN.load("DQN_model_hard_actions_2")
 t = 0
 done = False
 episode_reward = 0
