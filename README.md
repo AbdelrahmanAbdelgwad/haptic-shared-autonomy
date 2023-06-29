@@ -27,5 +27,18 @@ Replace .venv with the name of your environment and follow these steps:
 "haptic-shared-autonomy/.venv/lib/python3.10/site-packages/stable_baselines3/common/vec_env/patch_gym.py", line 8
 Replace the line with this :
     `import haptic.gym as gym  # pytype: disable=import-error`
+
+"haptic-shared-autonomy/.venv/lib/python3.10/site-packages/shimmy/openai_gym_compatibility.py", line 35
+Replace the line with this :
+    `import haptic.gym as gym`
+
+"haptic-shared-autonomy/.venv/lib/python3.10/site-packages/shimmy/openai_gym_compatibility.py", line 36
+Replace the line with this :
+    `import haptic.gym.wrappers`
+Also replace all `gym.wrappers` with `haptic.gym.wrappers`
+
+
+
+
  
 
