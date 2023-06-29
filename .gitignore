@@ -1,5 +1,6 @@
-data
 models
+pybox2d_dev
+research_data
 
 .pylintrc
 
