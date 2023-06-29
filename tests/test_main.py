@@ -20,4 +20,5 @@ def test_env():
         max_time_out=0,
         frames_per_state=4,
     )
+    env.step(1)
     assert 1 == 1
