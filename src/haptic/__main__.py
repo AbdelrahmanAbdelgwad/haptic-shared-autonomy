@@ -169,7 +169,7 @@ def main():
     # env = CarRacingDiscrete(NUM_OF_STEPS)
     # Load model
     if LOAD_SAVED_MODEL:
-        DQN.load("DQN_model", env=env)
+        DQN.load("DQN_model_hard_actions_2", env=env)
     else:
         if "DQNmodel" not in globals():
             DQNmodel = DQN(
@@ -195,7 +195,7 @@ def main():
     time_in_hours = ((dt / 1000) / 60) / 60
     print("\n", "training time was", time_in_hours, "\n")
     # Save model
-    DQNmodel.save("DQN_model_hard_actions")
+    DQNmodel.save("DQN_model_hard_actions_3")
 
 
 if __name__ == "__main__":
