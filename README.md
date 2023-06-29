@@ -15,3 +15,5 @@ Haptic feedback controll to assistant driving systems
 
 `$ sudo python setup.py install`
 
+`pip install box2d-py`
+
