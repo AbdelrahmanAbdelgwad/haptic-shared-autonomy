@@ -5,6 +5,8 @@ Haptic feedback controll to assistant driving systems
 
 ``Installation``
 
+`pip install -r requirements.txt`
+
 `pip install swig`
 
 `$ git clone https://github.com/pybox2d/pybox2d pybox2d_dev`
