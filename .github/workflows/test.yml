@@ -33,10 +33,10 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Lint with Pylint
         run: |
-          pylint src/highrl --disable=no-member |& tee pylint.log
+          pylint src/haptic --disable=no-member |& tee pylint.log
       - name: Style checking with mypy
         run: |
-          mypy src/highrl/ --ignore-missing-imports |& tee mypy.log
-      - name: Test with unittest
+          mypy src/haptic/ --ignore-missing-imports |& tee mypy.log
+      - name: Test with pytest
         run: |
           pytest
