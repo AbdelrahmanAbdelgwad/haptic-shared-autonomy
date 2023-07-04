@@ -22,7 +22,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.dqn import CnnPolicy
 
 NUM = 54
-NUM_OF_STEPS = 3_000
+NUM_OF_STEPS = 100
 NUM_OF_EPISODES = 1
 LOG_INTERVAL = 50
 BUFFER_SIZE = 50000
@@ -30,6 +30,7 @@ LEARNING_STARTS = 50000
 MODEL_SAVE_NAME = "DQN_RL_" + str(NUM)
 SAVED_MODEL_VERSION = "latest"
 LOAD_SAVED_MODEL = True
+TEST_OR_TRAIN = "test"
 
 
 class DQNCustomCallback(BaseCallback):
@@ -129,73 +130,113 @@ def add(x, y):
 
 
 def main():
-    # if gpu is to be used
-    # pylint: disable=E1101
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # pylint: enable=E1101
-    print("using", device)
+    if TEST_OR_TRAIN == "train":
+        # if gpu is to be used
+        # pylint: disable=E1101
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # pylint: enable=E1101
+        print("using", device)
 
-    # env = gnwrapper.Animation(CarRacingDiscrete())
-    # env = CarRacingDiscrete()
-    env = CarRacing(
-        allow_reverse=False,
-        grayscale=1,
-        show_info_panel=1,
-        discretize_actions="soft",
-        num_tracks=2,
-        num_lanes=2,
-        num_lanes_changes=4,
-        max_time_out=2,
-        frames_per_state=4,
-    )
-    # print(env.action_space.shape)
-    # print(env.action_space)
+        # env = gnwrapper.Animation(CarRacingDiscrete())
+        # env = CarRacingDiscrete()
+        env = CarRacing(
+            allow_reverse=False,
+            grayscale=1,
+            show_info_panel=1,
+            discretize_actions="soft",
+            num_tracks=2,
+            num_lanes=2,
+            num_lanes_changes=4,
+            max_time_out=2,
+            frames_per_state=4,
+        )
+        # print(env.action_space.shape)
+        # print(env.action_space)
 
-    # env.reset()
-    # env.render()
-    # im = env.render("state_pixels")
+        # env.reset()
+        # env.render()
+        # im = env.render("state_pixels")
 
-    # def state_image_preprocess(state_image):
-    #     state_image = state_image.transpose((2, 0, 1))
-    #     state_image = np.ascontiguousarray(state_image, dtype=np.float32) / 255
-    #     state_image = torch.from_numpy(state_image)
-    #     return state_image.unsqueeze(0).to(device)
+        # def state_image_preprocess(state_image):
+        #     state_image = state_image.transpose((2, 0, 1))
+        #     state_image = np.ascontiguousarray(state_image, dtype=np.float32) / 255
+        #     state_image = torch.from_numpy(state_image)
+        #     return state_image.unsqueeze(0).to(device)
 
-    # state_image_preprocess(im).shape
-    # plt.imshow(state_image_preprocess(im).cpu().squeeze(0).permute(1, 2, 0).numpy())
+        # state_image_preprocess(im).shape
+        # plt.imshow(state_image_preprocess(im).cpu().squeeze(0).permute(1, 2, 0).numpy())
 
-    # Use wrappers.Monitor in order to have a video
-    # env = RecordVideo(CarRacingDiscrete(NUM_OF_STEPS),'./video',  episode_trigger = lambda episode_number: True)
-    # env = CarRacingDiscrete(NUM_OF_STEPS)
-    # Load model
-    if LOAD_SAVED_MODEL:
-        DQNmodel = DQN.load("DQN_model_hard_actions_2", env=env)
-    else:
-        if "DQNmodel" not in globals():
-            DQNmodel = DQN(
-                CnnPolicy,
-                env,
-                verbose=2,
-                buffer_size=BUFFER_SIZE,
-                learning_starts=LEARNING_STARTS,
-            )
-            print("INITIALIZE NEW DQN MODEL")
+        # Use wrappers.Monitor in order to have a video
+        # env = RecordVideo(CarRacingDiscrete(NUM_OF_STEPS),'./video',  episode_trigger = lambda episode_number: True)
+        # env = CarRacingDiscrete(NUM_OF_STEPS)
+        # Load model
+        if LOAD_SAVED_MODEL:
+            DQNmodel = DQN.load("DQN_model_hard_actions_2", env=env)
         else:
-            DQNmodel = DQN.load(MODEL_SAVE_NAME, env=env)
-            print("CONTINUE DQN MODEL TRAINING")
+            if "DQNmodel" not in globals():
+                DQNmodel = DQN(
+                    CnnPolicy,
+                    env,
+                    verbose=2,
+                    buffer_size=BUFFER_SIZE,
+                    learning_starts=LEARNING_STARTS,
+                )
+                print("INITIALIZE NEW DQN MODEL")
+            else:
+                DQNmodel = DQN.load(MODEL_SAVE_NAME, env=env)
+                print("CONTINUE DQN MODEL TRAINING")
 
-    t1 = time.time()
-    # Train model
-    DQNmodel.learn(
-        total_timesteps=NUM_OF_STEPS * NUM_OF_EPISODES,
-        log_interval=LOG_INTERVAL,
-    )
-    t2 = time.time()
-    dt = t2 - t1
-    time_in_hours = ((dt / 1000) / 60) / 60
-    print("\n", "training time was", time_in_hours, "\n")
-    # Save model
-    DQNmodel.save("DQN_model_hard_actions_3")
+        t1 = time.time()
+        # Train model
+        DQNmodel.learn(
+            total_timesteps=NUM_OF_STEPS * NUM_OF_EPISODES,
+            log_interval=LOG_INTERVAL,
+        )
+        t2 = time.time()
+        dt = t2 - t1
+        time_in_hours = ((dt / 1000) / 60) / 60
+        print("\n", "training time was", time_in_hours, "\n")
+        # Save model
+        DQNmodel.save("DQN_model_hard_actions_4")
+    else:
+        import haptic.gym as gym
+        from haptic.gym.envs.box2d.car_racing import CarRacing
+        from stable_baselines3 import DQN
+
+        env = CarRacing(
+            allow_reverse=False,
+            grayscale=1,
+            show_info_panel=1,
+            discretize_actions="soft",
+            num_tracks=2,
+            num_lanes=2,
+            num_lanes_changes=4,
+            max_time_out=0,
+            frames_per_state=4,
+        )
+        # Uncomment following line to save video of our Agent interacting in this environment
+        # This can be used for debugging and studying how our agent is performing
+        env = gym.wrappers.Monitor(env, "./video/", force=True)
+        model = DQN.load("DQN_model_hard_actions_2")
+        t = 0
+        done = False
+        episode_reward = 0
+        observation = env.reset()
+        # Notice that episodes here are very small due to the way that the environment is structured
+        for episode in range(10000):
+            while not done:
+                t += 1
+                env.render()
+                #    print(observation)
+                action, _ = model.predict(observation)
+                observation, reward, done, info = env.step(action)
+                episode_reward += reward
+                if done:
+                    print("Episode finished after {} timesteps".format(t + 1))
+                break
+            print(episode_reward)
+            episode_reward = 0
+        env.close()
 
 
 if __name__ == "__main__":
