@@ -1526,9 +1526,13 @@ class CarRacing(gym.Env, EzPickle):
                 n += 1
         self.tracks[0] = np.delete(self.tracks[0], list(to_remove), axis=0)
 
+        # if len(self.tracks[1]) < 5:
+        #     self.tracks[1] = np.delete(
+        #         self.tracks[1], range(len(self.tracks[1])), axis=1
+        #     )
         if len(self.tracks[1]) < 5:
             self.tracks[1] = np.delete(
-                self.tracks[1], range(len(self.tracks[1])), axis=1
+                self.tracks[1], np.arange(len(self.tracks[1])), axis=0
             )
 
     def _choice_random_track_from_file(self):
