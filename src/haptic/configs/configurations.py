@@ -8,7 +8,7 @@ model_save_path = testing_args_model_1
 
 [timesteps]
 max_episode_timesteps = 100
-total_timesteps = 1000000
+total_timesteps = 1000
 
 
 [render]
