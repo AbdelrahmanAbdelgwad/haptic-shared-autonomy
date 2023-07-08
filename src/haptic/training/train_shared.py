@@ -5,7 +5,7 @@ import torch as th
 import matplotlib.pyplot as plt
 
 LOAD_MODEL = False
-LOAD_MODEL = False
+
 # MAX_EPISODE_STEPS = 500
 ALPHA = 0.4
 if __name__ == "__main__":
