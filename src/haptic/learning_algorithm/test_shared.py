@@ -3,8 +3,7 @@ from haptic.learning_algorithm.shared_dqn import Agent
 import numpy as np
 import torch as th
 
-LOAD_MODEL = True
-ALPHA = 0.4
+ALPHA = 0.2
 # MAX_EPISODE_STEPS = 500
 
 if __name__ == "__main__":
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     model = th.load(
         "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot"
     )
-    pilot = th.load("DQN_Lunar")
+    pilot = th.load("trials/models/DQN_Lunar")
     agent.Q_pred = model
     print("\n model loaded successfully \n")
     scores, eps_history = [], []
@@ -35,13 +34,14 @@ if __name__ == "__main__":
         observation = env.reset()
         episode_steps = 0
         while not done:
-            if episode_steps >= 500:
+            if episode_steps >= 1000:
                 break
             episode_steps += 1
             env.render()
-            state = th.tensor(observation[:8]).to(agent.Q_pred.device)
-            pi_q_values = pilot.forward(state).cpu().data.numpy()
-            pi_action = np.argmax(pi_q_values).item()
+            # state = th.tensor(observation[:8]).to(agent.Q_pred.device)
+            # pi_q_values = pilot.forward(state).cpu().data.numpy()
+            # pi_action = np.argmax(pi_q_values).item()
+            pi_action = env.action_space.sample()
             observation[8] = pi_action
             action = agent.choose_action(observation)
             observation_, reward, done, info = env.step(

@@ -77,10 +77,10 @@ def main():
         )
         t2 = time.time()
         dt = t2 - t1
-        time_in_hours = ((dt / 1000) / 60) / 60
-        print("\n", "training time was", time_in_hours, "\n")
         # Save model
         DQNmodel.save(model_save_path)
+        time_in_hours = ((dt / 1000) / 60) / 60
+        print("\n", "training time was", time_in_hours, "\n")
 
     elif agent_config.get("mode", "mode") == "test":
         env = CarRacing(

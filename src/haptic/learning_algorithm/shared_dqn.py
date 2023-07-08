@@ -94,8 +94,6 @@ class Agent:
         self.target_cntr += 1
 
     def choose_action(self, observation):
-        from haptic.gym.spaces.box import Box
-
         if np.random.random() > self.epsilon:
             state = th.tensor([observation]).to(self.Q_pred.device)
 

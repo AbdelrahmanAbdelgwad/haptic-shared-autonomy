@@ -9,7 +9,7 @@ if __name__ == "__main__":
     env = LunarLander()
     scores, eps_history = [], []
     n_games = 500
-    model = th.load("DQN_Lunar")
+    model = th.load("trials/models/DQN_Lunar")
     for i in range(n_games):
         score = 0
         done = False
