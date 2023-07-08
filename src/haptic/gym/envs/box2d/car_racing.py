@@ -351,6 +351,10 @@ class CarRacing(gym.Env, EzPickle):
                                      - "soft" actions are 7 [NOTHING, SOFT_LEFT, HARD_LEFT, SOFT_RIGHT,
                                      HARD_RIGHT, SOFT_STRAIGHT, HARD_STRAIGHT, SOFT_BREAK,
                                      HARD_BREAK]
+                                     - "smooth" actions are 15 [NOTHING, LEFT_LEVEL_1, LEFT_LEVEL_2,
+                                     LEFT_LEVEL_3, LEFT_LEVEL_4, LEFT_LEVEL_5, RIGHT_LEVEL_1 , RIGHT_LEVEL_2,
+                                     RIGHT_LEVEL_3, RIGHT_LEVEL_4, RIGHT_LEVEL_5, SOFT_ACCELERATE,
+                                     HARD_ACCELERATE, SOFT_BREAK, HARD_BREAK]
 
     min_step_reward (flt -inf)    To limit the min reward the agent can have in an episode, -np.inf means no limit
                                      it is good to control the gradient
@@ -424,6 +428,23 @@ class CarRacing(gym.Env, EzPickle):
             "HARD_LEFT",
             "SOFT_RIGHT",
             "HARD_RIGHT",
+            "SOFT_ACCELERATE",
+            "HARD_ACCELERATE",
+            "SOFT_BREAK",
+            "HARD_BREAK",
+        )
+        self.possible_smooth_actions = (
+            "NOTHING",
+            "LEFT_LEVEL_1",
+            "LEFT_LEVEL_2",
+            "LEFT_LEVEL_3",
+            "LEFT_LEVEL_4",
+            "LEFT_LEVEL_5",
+            "RIGHT_LEVEL_1",
+            "RIGHT_LEVEL_2",
+            "RIGHT_LEVEL_3",
+            "RIGHT_LEVEL_4",
+            "RIGHT_LEVEL_5",
             "SOFT_ACCELERATE",
             "HARD_ACCELERATE",
             "SOFT_BREAK",
@@ -531,10 +552,9 @@ class CarRacing(gym.Env, EzPickle):
             lst = list(range(self.frames_per_state))
             self._update_index = [lst[-1]] + lst[:-1]
 
-        # not including "soft" because it is not implemented yet
         self.discretize_actions = (
             discretize_actions
-            if discretize_actions in [None, "hard", "soft"]
+            if discretize_actions in [None, "hard", "soft", "smooth"]
             else "hard"
         )
 
@@ -545,7 +565,9 @@ class CarRacing(gym.Env, EzPickle):
 
         state_shape = tuple(state_shape)
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
-        if self.discretize_actions == "soft":
+        if self.discretize_actions == "smooth":
+            self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
+        elif self.discretize_actions == "soft":
             self.action_space = spaces.Discrete(len(self.possible_soft_actions))
         elif self.discretize_actions == "hard":
             self.action_space = spaces.Discrete(len(self.possible_hard_actions))
@@ -1933,6 +1955,41 @@ class CarRacing(gym.Env, EzPickle):
             self.state = new_frame
 
     def _transform_action(self, action):
+        if self.discretize_actions == "smooth":
+            # "NOTHING", # LEFT_LEVEL_1, # LEFT_LEVEL_2, # LEFT_LEVEL_3, # LEFT_LEVEL_4,
+            # # LEFT_LEVEL_5, RIGHT_LEVEL_1 , # RIGHT_LEVEL_2, # RIGHT_LEVEL_3, # RIGHT_LEVEL_4,
+            # # RIGHT_LEVEL_5, "SOFT_ACCELERATE", "HARD_ACCELERATE", "SOFT_BREAK", "HARD_BREAK"
+            if action == 0:
+                action = [0, 0, 0.0]  # "NOTHING"
+            if action == 1:
+                action = [-0.2, 0, 0.0]  # LEFT_LEVEL_1
+            if action == 2:
+                action = [-0.4, 0, 0.0]  # LEFT_LEVEL_2
+            if action == 3:
+                action = [-0.6, 0, 0.0]  # LEFT_LEVEL_3
+            if action == 4:
+                action = [-0.8, 0, 0.0]  # LEFT_LEVEL_4
+            if action == 5:
+                action = [-1, 0, 0.0]  # LEFT_LEVEL_5
+            if action == 6:
+                action = [0.2, 0, 0.0]  # RIGHT_LEVEL_1
+            if action == 7:
+                action = [0.4, 0, 0.0]  # RIGHT_LEVEL_2
+            if action == 8:
+                action = [0.6, 0, 0.0]  # RIGHT_LEVEL_3
+            if action == 9:
+                action = [0.8, 0, 0.0]  # RIGHT_LEVEL_4
+            if action == 10:
+                action = [1, 0, 0.0]  # RIGHT_LEVEL_5
+            if action == 11:
+                action = [0, +0.5, 0.0]  # SOFT_ACCELERATE
+            if action == 12:
+                action = [0, +1, 0.0]  # HARD_ACCELERATE
+            if action == 13:
+                action = [0, 0, 0.4]  # SOFT_BREAK
+            if action == 14:
+                action = [0, 0, 0.8]  # HARD_BREAK
+
         if self.discretize_actions == "soft":
             # "NOTHING", "SOFT_LEFT", "HARD_LEFT", "SOFT_RIGHT", "HARD_RIGHT",
             # "SOFT_ACCELERATE", "HARD_ACCELERATE", "SOFT_BREAK", "HARD_BREAK"

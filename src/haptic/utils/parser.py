@@ -68,6 +68,14 @@ def parse_args() -> argparse.Namespace:
         help="Whether to run model for training or inference (default: %(default)s)",
     )
     parser.add_argument(
+        "--action-disc-level",
+        type=str,
+        default="smooth",
+        dest="action_disc_level",
+        choices=["hard", "soft", "smooth"],
+        help="What level of action discretization to use (default: %(default)s)",
+    )
+    parser.add_argument(
         "--training-algorithm",
         type=str,
         default="DQN",

@@ -55,7 +55,7 @@ def main():
             allow_reverse=False,
             grayscale=1,
             show_info_panel=1,
-            discretize_actions="smooth",
+            discretize_actions=args.action_disc_level,
             num_tracks=2,
             num_lanes=2,
             num_lanes_changes=4,
@@ -87,7 +87,7 @@ def main():
             allow_reverse=False,
             grayscale=1,
             show_info_panel=1,
-            discretize_actions="smooth",
+            discretize_actions=args.action_disc_level,
             num_tracks=2,
             num_lanes=2,
             num_lanes_changes=4,
@@ -97,7 +97,7 @@ def main():
         # Uncomment following line to save video of our Agent interacting in this environment
         # This can be used for debugging and studying how our agent is performing
         env = gym.wrappers.Monitor(env, "./video/", force=True)
-        model = DQN.load(args.initial_model)
+        model = DQN.load("testing_args_model_1")
         t = 0
         done = False
         episode_reward = 0
