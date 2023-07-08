@@ -20,7 +20,7 @@ if __name__ == "__main__":
         alpha=ALPHA,
     )
     model = th.load(
-        "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot"
+        "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation"
     )
     pilot = th.load("trials/models/DQN_Lunar")
     agent.Q_pred = model
@@ -38,10 +38,10 @@ if __name__ == "__main__":
                 break
             episode_steps += 1
             env.render()
-            # state = th.tensor(observation[:8]).to(agent.Q_pred.device)
-            # pi_q_values = pilot.forward(state).cpu().data.numpy()
-            # pi_action = np.argmax(pi_q_values).item()
-            pi_action = env.action_space.sample()
+            state = th.tensor(observation[:8]).to(agent.Q_pred.device)
+            pi_q_values = pilot.forward(state).cpu().data.numpy()
+            pi_action = np.argmax(pi_q_values).item()
+            # pi_action = env.action_space.sample()
             observation[8] = pi_action
             action = agent.choose_action(observation)
             observation_, reward, done, info = env.step(

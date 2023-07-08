@@ -1,9 +1,8 @@
 name: Linters
 
-# Added for permission issue on github PR 
 on: pull_request
 
-permissions: write-all
+# permissions: write-all
 
 jobs:
   Testing:
@@ -42,7 +41,7 @@ jobs:
       - name: Parsing linters
         run: python scripts/linters_parser.py
 
-      - name: Comment PR
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          filePath: linters.txt
+      # - name: Comment PR
+      #   uses: thollander/actions-comment-pull-request@v2
+      #   with:
+      #     filePath: linters.txt

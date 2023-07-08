@@ -5,6 +5,7 @@ import torch as th
 import matplotlib.pyplot as plt
 
 LOAD_MODEL = False
+LOAD_MODEL = False
 # MAX_EPISODE_STEPS = 500
 ALPHA = 0.4
 if __name__ == "__main__":
@@ -22,14 +23,15 @@ if __name__ == "__main__":
         alpha=ALPHA,
     )
     if LOAD_MODEL:
-        model = th.load("DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot")
+        model = th.load(
+            "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation"
+        )
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 1000
+    n_games = 2000
     total_steps = 0
-    pilot = th.load("trials/models/DQN_Lunar")
-    max_avg_score = -np.inf
+    pilot = th.load("DQN_Lunar")
     for i in range(n_games):
         score = 0
         done = False
@@ -67,13 +69,11 @@ if __name__ == "__main__":
             f"episode_steps {episode_steps}",
             f"total_steps {total_steps}",
         )
-
-        if avg_score > max_avg_score:
-            max_avg_score = max(avg_score, max_avg_score)
+        if avg_scores[i] > avg_scores[i - 1]:
             model = agent.Q_pred
             th.save(
                 model,
-                "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot",
+                "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation",
             )
             print("\n saving best model \n")
 
@@ -85,9 +85,10 @@ if __name__ == "__main__":
         # plt.show()
         plt.savefig(f"trials/graphs/training_using_alpha_0.4.png")
         # plt.close()
+
     model = agent.Q_pred
     th.save(
         model,
-        "trials/models/final_DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot",
+        "trials/models/final_DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation",
     )
     print("\n saving final model \n")
