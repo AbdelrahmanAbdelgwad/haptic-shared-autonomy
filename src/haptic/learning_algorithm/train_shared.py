@@ -5,9 +5,10 @@ import torch as th
 import matplotlib.pyplot as plt
 
 LOAD_MODEL = True
-MAX_EPISODE_STEPS = 500
+# MAX_EPISODE_STEPS = 500
+ALPHA = 0.4
 if __name__ == "__main__":
-    env = LunarLanderShared(max_episode_steps=MAX_EPISODE_STEPS)
+    env = LunarLanderShared()
     agent = Agent(
         gamma=0.99,
         epsilon=1,
@@ -17,14 +18,14 @@ if __name__ == "__main__":
         input_dims=[9],
         lr=0.003,
         max_mem_size=5000,
-        alpha=0.4,
+        alpha=ALPHA,
     )
     if LOAD_MODEL:
-        model = th.load("DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_5")
+        model = th.load("DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 500
+    n_games = 1000
     total_steps = 0
     pilot = th.load("DQN_Lunar")
     for i in range(n_games):
@@ -64,8 +65,12 @@ if __name__ == "__main__":
             f"episode_steps {episode_steps}",
             f"total_steps {total_steps}",
         )
-        model = agent.Q_pred
-        th.save(model, "DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_6")
+        if avg_scores[i] > avg_scores[i - 1]:
+            model = agent.Q_pred
+            th.save(
+                model,
+                "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot",
+            )
 
         # build the plot
         plt.plot(avg_scores)
@@ -73,5 +78,5 @@ if __name__ == "__main__":
         plt.ylabel("average score")
         plt.title("average score during training")
         # plt.show()
-        plt.savefig(f"training_using_alpha_0.4_6.png")
+        plt.savefig(f"trials/graphs/training_using_alpha_0.4.png")
         # plt.close()

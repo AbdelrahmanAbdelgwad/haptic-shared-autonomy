@@ -446,10 +446,10 @@ class LunarLanderContinuous(LunarLander):
 
 
 class LunarLanderShared(LunarLander):
-    def __init__(self, max_episode_steps):
+    def __init__(self):
         EzPickle.__init__(self)
-        self.episode_steps_counter = 0
-        self.max_episode_steps = max_episode_steps
+        # self.episode_steps_counter = 0
+        # self.max_episode_steps = max_episode_steps
         self.seed()
         self.viewer = None
 
@@ -477,7 +477,7 @@ class LunarLanderShared(LunarLander):
         self.reset()
 
     def step(self, action, pi_action):
-        self.episode_steps_counter += 1
+        # self.episode_steps_counter += 1
         if self.continuous:
             action = np.clip(action, -1, +1).astype(np.float32)
         else:
@@ -596,14 +596,14 @@ class LunarLanderShared(LunarLander):
         if not self.lander.awake:
             done = True
             reward = +100
-        if self.episode_steps_counter > self.max_episode_steps:
-            reward -= -100
-            done = True
-            # self.episode_steps_counter = 0
+        # if self.episode_steps_counter > self.max_episode_steps:
+        #     reward -= -100
+        #     done = True
+        #     # self.episode_steps_counter = 0
         return np.array(state, dtype=np.float32), reward, done, {}
 
     def reset(self):
-        self.episode_steps_counter = 0
+        # self.episode_steps_counter = 0
 
         self._destroy()
         self.world.contactListener_keepref = ContactDetector(self)

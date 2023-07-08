@@ -5,10 +5,10 @@ import torch as th
 
 LOAD_MODEL = True
 ALPHA = 0.4
-MAX_EPISODE_STEPS = 500
+# MAX_EPISODE_STEPS = 500
 
 if __name__ == "__main__":
-    env = LunarLanderShared(max_episode_steps=MAX_EPISODE_STEPS)
+    env = LunarLanderShared()
     agent = Agent(
         gamma=0.99,
         epsilon=0,
@@ -20,7 +20,9 @@ if __name__ == "__main__":
         max_mem_size=5000,
         alpha=ALPHA,
     )
-    model = th.load("DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_5")
+    model = th.load(
+        "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot"
+    )
     pilot = th.load("DQN_Lunar")
     agent.Q_pred = model
     print("\n model loaded successfully \n")
