@@ -5,8 +5,7 @@ import numpy as np
 import torch as th
 import matplotlib.pyplot as plt
 
-LOAD_MODEL = False
-ALPHA = 0.4
+ALPHA = 1
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
@@ -26,10 +25,10 @@ if __name__ == "__main__":
     )
     agent = Agent(
         gamma=0.99,
-        epsilon=1,
+        epsilon=0,
         batch_size=64,
         n_actions=n_actions,
-        eps_end=0.01,
+        eps_end=0,
         input_dims=(96, 96, frames_per_state + 1),
         lr=0.003,
         max_mem_size=5000,
@@ -37,15 +36,13 @@ if __name__ == "__main__":
         alpha=ALPHA,
         observation_space=env.observation_space,
     )
-    if LOAD_MODEL:
-        model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.4")
-        agent.Q_pred = model
-        print("\n model loaded successfully \n")
+    model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.4")
+    agent.Q_pred = model
+    print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
     n_games = 500
     total_steps = 0
     pilot = DQN.load("trials/models/DQN_model_hard_actions_2")
-    max_avg_score = np.inf
     for i in range(n_games):
         score = 0
         done = False
@@ -54,6 +51,7 @@ if __name__ == "__main__":
         while not done:
             # if episode_steps >= 500:
             #     break
+            env.render()
             episode_steps += 1
             # pi_action = env.action_space.sample()
             state = (
@@ -66,14 +64,11 @@ if __name__ == "__main__":
             pi_action, _ = pilot.predict(state)
             pi_frame = pi_action * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame
-            # print(flattened_obs.shape)
             action = agent.choose_action(observation)
             observation_, reward, done, info = env.step(
                 action=action, pi_action=pi_action
             )
             score += reward
-            agent.store_transitions(observation, action, reward, observation_, done)
-            agent.learn()
             observation = observation_
         scores.append(score)
         eps_history.append(agent.epsilon)
@@ -90,29 +85,3 @@ if __name__ == "__main__":
             f"episode_steps {episode_steps}",
             f"total_steps {total_steps}",
         )
-        if avg_scores[i] > max_avg_score:
-            model = agent.Q_pred
-            th.save(
-                model,
-                "trials/models/best_model_DQN_Car_Racer_alpha_0.4",
-            )
-            print("\n saving best model \n")
-            max_avg_score = avg_scores[i]
-        if total_steps > 1000_000:
-            break
-
-        # build the plot
-        plt.plot(avg_scores)
-        plt.xlabel("timesteps")
-        plt.ylabel("average score")
-        plt.title("average score during training")
-        # plt.show()
-        plt.savefig(f"trials/graphs/DQN_Car_Racer_alpha_0.4.png")
-        # plt.close()
-
-    model = agent.Q_pred
-    th.save(
-        model,
-        "trials/models/final_model_DQN_Car_Racer_alpha_0.4",
-    )
-    print("\n saving final model \n")
