@@ -54,7 +54,6 @@ if __name__ == "__main__":
             #     break
             episode_steps += 1
             # pi_action = env.action_space.sample()
-            env.render()
             state = (
                 th.tensor(observation[:, :, 0:4])
                 .to(agent.Q_pred.device)
