@@ -1,5 +1,5 @@
 from haptic.gym.envs.box2d.car_racing import CarRacingShared
-from haptic.learning_algorithm.shared_dqn import Agent
+from haptic.learning_algorithm.shared_dqn_cnn import Agent
 from stable_baselines3 import DQN
 import numpy as np
 import torch as th
@@ -9,6 +9,7 @@ LOAD_MODEL = False
 ALPHA = 0.4
 STATE_W = 96
 STATE_H = 96
+frames_per_state = 4
 
 if __name__ == "__main__":
     env = CarRacingShared(
@@ -28,11 +29,12 @@ if __name__ == "__main__":
         batch_size=64,
         n_actions=15,
         eps_end=0.01,
-        input_dims=[STATE_W * STATE_H * 5],
+        input_dims=(96, 96, frames_per_state + 1),
         lr=0.003,
         max_mem_size=5000,
         max_q_target_iter=300,
         alpha=ALPHA,
+        observation_space=env.observation_space,
     )
     if LOAD_MODEL:
         model = th.load("trials/models/DQN_Car_Racer_alpha_0.4")
@@ -63,15 +65,13 @@ if __name__ == "__main__":
             pi_action, _ = pilot.predict(state)
             pi_frame = pi_action * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame
-            flattened_obs = th.flatten(th.tensor(observation))
             # print(flattened_obs.shape)
-            action = agent.choose_action(flattened_obs)
+            action = agent.choose_action(observation)
             observation_, reward, done, info = env.step(
                 action=action, pi_action=pi_action
             )
             score += reward
-            flattened_obs_ = th.flatten(th.tensor(observation_))
-            agent.store_transitions(flattened_obs, action, reward, flattened_obs_, done)
+            agent.store_transitions(observation, action, reward, observation_, done)
             agent.learn()
             observation = observation_
         scores.append(score)
