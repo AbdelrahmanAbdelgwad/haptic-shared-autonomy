@@ -2881,7 +2881,7 @@ class CarRacingShared(CarRacing):
         if self.frames_per_state > 1:
             state_shape.append(self.frames_per_state)
 
-            lst = list(range(self.frames_per_state))
+            lst = list(range(self.frames_per_state + 1))
             self._update_index = [lst[-1]] + lst[:-1]
 
         self.discretize_actions = (

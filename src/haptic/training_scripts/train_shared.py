@@ -23,15 +23,13 @@ if __name__ == "__main__":
         alpha=ALPHA,
     )
     if LOAD_MODEL:
-        model = th.load(
-            "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation"
-        )
+        model = th.load("trials/models/DQN_Lunar_Shared_alpha_0.4")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
     n_games = 2000
     total_steps = 0
-    pilot = th.load("DQN_Lunar")
+    # pilot = th.load("trials/models/DQN_Lunar")
     for i in range(n_games):
         score = 0
         done = False
@@ -41,10 +39,10 @@ if __name__ == "__main__":
             # if episode_steps >= 500:
             #     break
             episode_steps += 1
-            # pi_action = env.action_space.sample()
-            state = th.tensor(observation[:8]).to(agent.Q_pred.device)
-            pi_q_values = pilot.forward(state).cpu().data.numpy()
-            pi_action = np.argmax(pi_q_values).item()
+            pi_action = env.action_space.sample()
+            # state = th.tensor(observation[:8]).to(agent.Q_pred.device)
+            # pi_q_values = pilot.forward(state).cpu().data.numpy()
+            # pi_action = np.argmax(pi_q_values).item()
             observation[8] = pi_action
             action = agent.choose_action(observation)
             observation_, reward, done, info = env.step(
@@ -73,7 +71,7 @@ if __name__ == "__main__":
             model = agent.Q_pred
             th.save(
                 model,
-                "trials/models/DQN_Lunar_Shared_alpha_0.4_with_pretrained_model_as_pilot_workstation",
+                "trials/models/DQN_Lunar_Shared_alpha_0.4",
             )
             print("\n saving best model \n")
 

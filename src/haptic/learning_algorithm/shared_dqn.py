@@ -7,32 +7,16 @@ import tensorflow as tf
 
 
 class DeepQNetwork(nn.Module):
-    def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions, cnn_flag=False):
+    def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
         super().__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
-        self.cnn_flag = cnn_flag
-        if self.cnn_flag:
-            # initialize first set of CONV => RELU => POOL layers
-            self.conv1 = nn.Conv2d(
-                in_channels=self.input_dims[-1], out_channels=20, kernel_size=(5, 5)
-            )
-            self.relu1 = nn.ReLU()
-            self.maxpool1 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-            # initialize second set of CONV => RELU => POOL layers
-            self.conv2 = nn.Conv2d(in_channels=20, out_channels=50, kernel_size=(5, 5))
-            self.relu2 = nn.ReLU()
-            self.maxpool2 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
 
-            self.fc1 = nn.Linear(96, self.fc1_dims)
-            self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
-            self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
-        else:
-            self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims)
-            self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
-            self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
+        self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims).double()
+        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims).double()
+        self.fc3 = nn.Linear(self.fc2_dims, self.n_actions).double()
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
@@ -40,35 +24,11 @@ class DeepQNetwork(nn.Module):
         self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
         self.to(self.device)
 
-    def forward(self, state_batch, batch_size):
-        if self.cnn_flag:
-            actions_batch = []
-
-            for i in range(batch_size):
-                # print(state)
-                state = state_batch[i, :, :, :].cpu().data.numpy()
-                # print(state.shape)
-                state = np.expand_dims(state, 0)
-                state = th.tensor(state).to("cuda")
-                # print(state.shape)
-                state = state.permute(0, 3, 1, 2)
-                x = self.conv1(state)
-                x = self.relu1(x)
-                x = self.maxpool1(x)
-                x = self.conv2(x)
-                x = self.relu2(x)
-                x = self.maxpool2(x)
-                x = F.relu(self.fc1(state))
-                x = F.relu(self.fc2(x))
-                actions = self.fc3(x)
-                actions_batch.append(actions)
-            return actions_batch
-            # return actions
-        else:
-            x = F.relu(self.fc1(state))
-            x = F.relu(self.fc2(x))
-            actions = self.fc3(x)
-            return actions
+    def forward(self, state):
+        x = F.relu(self.fc1(state.double()))
+        x = F.relu(self.fc2(x))
+        actions = self.fc3(x)
+        return actions
 
 
 class Agent:
@@ -85,7 +45,6 @@ class Agent:
         eps_dec=5e-4,
         max_q_target_iter=300,
         alpha=0.6,
-        cnn_flag=False,
     ):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -99,7 +58,6 @@ class Agent:
         self.target_cntr = 0
         self.C = max_q_target_iter
         self.alpha = alpha
-        self.cnn_flag = cnn_flag
 
         self.Q_pred = DeepQNetwork(
             lr=self.lr,
@@ -107,7 +65,6 @@ class Agent:
             fc1_dims=256,
             fc2_dims=256,
             n_actions=n_actions,
-            cnn_flag=self.cnn_flag,
         )
         self.Q_target = self.Q_pred
 
@@ -137,16 +94,23 @@ class Agent:
         self.target_cntr += 1
 
     def choose_action(self, observation):
+        from haptic.gym.spaces.box import Box
+
         if np.random.random() > self.epsilon:
-            state = th.tensor([observation]).to(self.Q_pred.device)
-
-            q_values = self.Q_pred.forward(state).cpu().data.numpy()
-            q_values -= tf.reduce_min(q_values, axis=1)
+            observation = th.tensor(observation).to(self.Q_pred.device)
+            # print("\n Observation shape is", observation.shape, "\n")
+            q_values = self.Q_pred.forward(observation).cpu().data.numpy()
+            # print("\n Q-values shape is", q_values.shape, "\n")
+            # q_values -= tf.reduce_min(q_values, axis=1)
+            q_values -= min(q_values)
             opt_action = np.argmax(q_values).item()
-            opt_q_values = q_values[0][opt_action]
+            # opt_q_values = q_values[0][opt_action]
+            opt_q_values = q_values[opt_action]
 
-            pi_action = int(observation[8])
-            pi_act_q_values = q_values[0][pi_action]
+            # pi_action = int(observation[8])
+            pi_action = int(observation[-1])
+            # pi_act_q_values = q_values[0][pi_action]
+            pi_act_q_values = q_values[pi_action]
 
             if pi_act_q_values >= (1 - self.alpha) * opt_q_values:
                 action = pi_action
@@ -167,23 +131,17 @@ class Agent:
         batch_index = np.arange(self.batch_size, dtype=np.int32)
 
         state_batch = th.tensor(self.state_memory[batch]).to(self.Q_pred.device)
-        # print(state_batch.shape)
         new_state_batch = th.tensor(self.new_state_memory[batch]).to(self.Q_pred.device)
         reward_batch = th.tensor(self.reward_memory[batch]).to(self.Q_pred.device)
         terminal_batch = th.tensor(self.terminal_memory[batch]).to(self.Q_pred.device)
 
         action_batch = self.action_memory[batch]
-        print([batch_index, action_batch])
-        q_pred = self.Q_pred.forward(state_batch, self.batch_size)[
-            batch_index, action_batch
-        ]
-        # q_pred = self.Q_pred.forward(state_batch, self.batch_size)
-        # q_pred = th.gather(q_pred, 1, th.tensor(action_batch).unsqueeze(1))
 
+        q_pred = self.Q_pred.forward(state_batch)[batch_index, action_batch]
         if self.target_cntr > self.C:
             self.target_cntr = 0
             self.Q_target = self.Q_pred
-        q_next = self.Q_target.forward(new_state_batch, self.batch_size)
+        q_next = self.Q_target.forward(new_state_batch)
         q_next[terminal_batch] = 0
         q_target = reward_batch + self.gamma * th.max(q_next, dim=1)[0]
 
