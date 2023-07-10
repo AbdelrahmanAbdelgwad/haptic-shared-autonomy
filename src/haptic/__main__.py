@@ -97,7 +97,7 @@ def main():
         # Uncomment following line to save video of our Agent interacting in this environment
         # This can be used for debugging and studying how our agent is performing
         env = gym.wrappers.Monitor(env, "./video/", force=True)
-        model = DQN.load("testing_args_model_1")
+        model = DQN.load(args.initial_model)
         t = 0
         done = False
         episode_reward = 0
@@ -107,8 +107,8 @@ def main():
             while not done:
                 t += 1
                 env.render()
-                #    print(observation)
                 action, _ = model.predict(observation)
+                print(action)
                 observation, reward, done, info = env.step(action)
                 episode_reward += reward
                 if done:

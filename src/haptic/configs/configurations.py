@@ -4,11 +4,11 @@ agent_config_str = """
 mode = train
 
 [paths]
-model_save_path = testing_args_model_1
+model_save_path = FINAL_MODEL_SMOOTH_CAR
 
 [timesteps]
-max_episode_timesteps = 100
-total_timesteps = 1000
+max_episode_timesteps = 1000
+total_timesteps = 1000_000
 
 
 [render]
