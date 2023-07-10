@@ -1,10 +1,8 @@
 import torch as th
-from torch import nn
-from torch import flatten
+import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import tensorflow as tf
 
 
 class DeepQNetwork(nn.Module):
@@ -73,20 +71,21 @@ class Agent:
         eps_end=0.01,
         eps_dec=5e-4,
         max_q_target_iter=300,
-        alpha=0.6,
     ):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
         self.eps_dec = eps_dec
         self.lr = lr
+        # Remove once you finish debugging
+        self.n_actions = n_actions
+        #
         self.action_space = [i for i in range(n_actions)]
         self.mem_size = max_mem_size
         self.batch_size = batch_size
         self.mem_cntr = 0
         self.target_cntr = 0
         self.C = max_q_target_iter
-        self.alpha = alpha
 
         self.Q_pred = DeepQNetwork(
             lr=self.lr,
@@ -121,25 +120,11 @@ class Agent:
         self.target_cntr += 1
 
     def choose_action(self, observation):
-        from haptic.gym.spaces.box import Box
-
         if np.random.random() > self.epsilon:
-            observation = th.tensor(observation).to(self.Q_pred.device)
-            q_values = self.Q_pred.forward(observation).cpu().data.numpy()
-            # q_values -= tf.reduce_min(q_values, axis=1)
-            q_values -= tf.reduce_min(q_values)
-            opt_action = np.argmax(q_values).item()
-            # opt_q_values = q_values[0][opt_action]
-            opt_q_values = q_values[opt_action]
-            # pi_action = int(observation[8])
-            pi_action = int(observation.cpu().data.numpy()[:, :, -1][0][0])
-            # pi_act_q_values = q_values[0][pi_action]
-            pi_act_q_values = q_values[pi_action]
-
-            if pi_act_q_values >= (1 - self.alpha) * opt_q_values:
-                action = pi_action
-            else:
-                action = opt_action
+            state = th.tensor([observation]).to(self.Q_pred.device)
+            actions = self.Q_pred.forward(state).cpu().data.numpy()
+            # print(type(actions))
+            action = np.argmax(actions).item()
         else:
             action = np.random.choice(self.action_space)
         return action
@@ -162,11 +147,15 @@ class Agent:
         action_batch = self.action_memory[batch]
 
         q_pred = self.Q_pred.forward(state_batch)[batch_index, action_batch]
+        ############ This Part needs to be changed to be constant for C iterations ################
         if self.target_cntr > self.C:
             self.target_cntr = 0
             self.Q_target = self.Q_pred
         q_next = self.Q_target.forward(new_state_batch)
+        # print(q_next.shape, f"[{self.batch_size},{self.n_actions}]")
+        # print(terminal_batch.shape)
         q_next[terminal_batch] = 0
+        ###########################################################################################
         q_target = reward_batch + self.gamma * th.max(q_next, dim=1)[0]
 
         loss = self.Q_pred.loss(q_target, q_pred).to(self.Q_pred.device)
