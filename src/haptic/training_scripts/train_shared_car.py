@@ -20,7 +20,7 @@ if __name__ == "__main__":
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
-        max_time_out=2,
+        max_time_out=5,
         frames_per_state=4,
     )
     agent = Agent(
@@ -37,13 +37,16 @@ if __name__ == "__main__":
         observation_space=env.observation_space,
     )
     if LOAD_MODEL:
-        model = th.load("trials/models/DQN_Car_Racer_alpha_0.4")
+        model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.4")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 100
+    n_games = 500
     total_steps = 0
-    pilot = DQN.load("trials/models/fully_autonomous_research_paper_model")
+    pilot = DQN.load(
+        "trials/models/fully_autonomous_research_paper_model_trained_for_5M_steps_using_smooth"
+    )
+    max_avg_score = np.inf
     for i in range(n_games):
         score = 0
         done = False
@@ -88,13 +91,16 @@ if __name__ == "__main__":
             f"episode_steps {episode_steps}",
             f"total_steps {total_steps}",
         )
-        if avg_scores[i] > avg_scores[i - 1]:
+        if avg_scores[i] > max_avg_score:
             model = agent.Q_pred
             th.save(
                 model,
                 "trials/models/best_model_DQN_Car_Racer_alpha_0.4",
             )
             print("\n saving best model \n")
+            max_avg_score = avg_scores[i]
+        if total_steps > 1000_000:
+            break
 
         # build the plot
         plt.plot(avg_scores)
