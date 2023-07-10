@@ -11,16 +11,16 @@ class DeepQNetwork(nn.Module):
     def __init__(self, lr, n_actions, observation_space):
         super().__init__()
         self.n_actions = n_actions
-
+        n_input_channels = observation_space.shape[-1]
+        print(n_input_channels)
         # initialize first set of CONV => RELU => POOL layers
         self.cnn = nn.Sequential(
-            nn.Conv2d(in_channels=5, out_channels=20, kernel_size=(5, 5)),
+            nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4, padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            # initialize second set of CONV => RELU => POOL layers
-            nn.Conv2d(in_channels=20, out_channels=50, kernel_size=(5, 5)),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
             nn.Flatten(),
         )
         with th.no_grad():
@@ -127,7 +127,6 @@ class Agent:
         if np.random.random() > self.epsilon:
             observation = th.tensor(observation).to(self.Q_pred.device)
             q_values = self.Q_pred.forward(observation).cpu().data.numpy()
-            # print("\n Q-values shape is", q_values.shape, "\n")
             # q_values -= tf.reduce_min(q_values, axis=1)
             q_values -= tf.reduce_min(q_values)
             opt_action = np.argmax(q_values).item()
