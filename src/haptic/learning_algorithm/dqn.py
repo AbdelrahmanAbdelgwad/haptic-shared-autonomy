@@ -6,7 +6,7 @@ import numpy as np
 
 
 class DeepQNetwork(nn.Module):
-    def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
+    def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions, cuda_index=1):
         super().__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
@@ -20,7 +20,9 @@ class DeepQNetwork(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
 
-        self.device = th.device("cuda" if th.cuda.is_available() else "cpu")
+        self.device = th.device(
+            f"cuda:{cuda_index}" if th.cuda.is_available() else "cpu"
+        )
         self.to(self.device)
 
     def forward(self, state):
@@ -43,6 +45,7 @@ class Agent:
         eps_end=0.01,
         eps_dec=5e-4,
         max_q_target_iter=300,
+        cuda_index=1,
     ):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -65,6 +68,7 @@ class Agent:
             fc1_dims=256,
             fc2_dims=256,
             n_actions=n_actions,
+            cuda_index=cuda_index,
         )
         self.Q_target = self.Q_pred
 
