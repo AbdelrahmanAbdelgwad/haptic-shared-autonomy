@@ -11,7 +11,7 @@ STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
 n_actions = 15
-RANDOM_ACTION_PROB = 0.1
+RANDOM_ACTION_PROB = 0.2
 action_space = [i for i in range(n_actions)]
 
 if __name__ == "__main__":
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             )
 
             pi_action, _ = pilot.predict(state)
-            if np.random.random() > RANDOM_ACTION_PROB:
+            if np.random.random() < RANDOM_ACTION_PROB:
                 pi_action = np.random.choice(action_space)
             pi_frame = pi_action * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame

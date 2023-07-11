@@ -125,6 +125,7 @@ class Agent:
             actions = self.Q_pred.forward(state).cpu().data.numpy()
             # print(type(actions))
             action = np.argmax(actions).item()
+            print(action)
         else:
             action = np.random.choice(self.action_space)
         return action
