@@ -9,14 +9,14 @@ ALPHA = 1
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
-n_actions = 5
+n_actions = 15
 
 if __name__ == "__main__":
     env = CarRacingShared(
         allow_reverse=False,
         grayscale=1,
         show_info_panel=1,
-        discretize_actions="hard",  # n_actions = 5
+        discretize_actions="smooth",  # n_actions = 5
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
@@ -36,13 +36,13 @@ if __name__ == "__main__":
         alpha=ALPHA,
         observation_space=env.observation_space,
     )
-    model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.4")
+    model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.4")
     agent.Q_pred = model
     print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
     n_games = 500
     total_steps = 0
-    pilot = DQN.load("trials/models/DQN_model_hard_actions_2")
+    pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_CAR")
     for i in range(n_games):
         score = 0
         done = False

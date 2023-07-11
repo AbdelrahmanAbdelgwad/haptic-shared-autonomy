@@ -5,19 +5,21 @@ import numpy as np
 import torch as th
 import matplotlib.pyplot as plt
 
-LOAD_MODEL = False
+LOAD_MODEL = True
 ALPHA = 0.4
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
-n_actions = 5
+n_actions = 15
+RANDOM_ACTION_PROB = 0.4
+action_space = [i for i in range(n_actions)]
 
 if __name__ == "__main__":
     env = CarRacingShared(
         allow_reverse=False,
         grayscale=1,
         show_info_panel=1,
-        discretize_actions="hard",  # n_actions = 5
+        discretize_actions="smooth",  # n_actions = 5
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
@@ -29,7 +31,7 @@ if __name__ == "__main__":
         epsilon=1,
         batch_size=64,
         n_actions=n_actions,
-        eps_end=0.01,
+        eps_end=0.05,
         input_dims=(96, 96, frames_per_state + 1),
         lr=0.003,
         max_mem_size=5000,
@@ -38,14 +40,14 @@ if __name__ == "__main__":
         observation_space=env.observation_space,
     )
     if LOAD_MODEL:
-        model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.4")
+        model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.4")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 500
+    n_games = 2000
     total_steps = 0
-    pilot = DQN.load("trials/models/DQN_model_hard_actions_2")
-    max_avg_score = np.inf
+    pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_CAR")
+    max_avg_score = -np.inf
     for i in range(n_games):
         score = 0
         done = False
@@ -64,6 +66,8 @@ if __name__ == "__main__":
             )
 
             pi_action, _ = pilot.predict(state)
+            if np.random.random() > RANDOM_ACTION_PROB:
+                pi_action = np.random.choice(action_space)
             pi_frame = pi_action * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame
             # print(flattened_obs.shape)

@@ -26,7 +26,7 @@ if __name__ == "__main__":
         epsilon=1,
         batch_size=64,
         n_actions=15,
-        eps_end=0.01,
+        eps_end=0.05,
         input_dims=(96, 96, frames_per_state),
         lr=0.003,
         max_mem_size=5000,
