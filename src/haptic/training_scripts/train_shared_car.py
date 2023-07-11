@@ -6,12 +6,12 @@ import torch as th
 import matplotlib.pyplot as plt
 
 LOAD_MODEL = True
-ALPHA = 0.4
+ALPHA = 0.6
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
 n_actions = 15
-RANDOM_ACTION_PROB = 0.4
+RANDOM_ACTION_PROB = 0.1
 action_space = [i for i in range(n_actions)]
 
 if __name__ == "__main__":
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 2000
+    n_games = 300
     total_steps = 0
     pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_CAR")
     max_avg_score = -np.inf
@@ -104,6 +104,13 @@ if __name__ == "__main__":
             max_avg_score = avg_scores[i]
         if total_steps > 1000_000:
             break
+
+        if total_steps % 5000 == 0:
+            th.save(
+                model,
+                "trials/models/final_model_DQN_Car_Racer_alpha_0.4",
+            )
+            print("\n saving model every 5000 steps \n")
 
         # build the plot
         plt.plot(avg_scores)
