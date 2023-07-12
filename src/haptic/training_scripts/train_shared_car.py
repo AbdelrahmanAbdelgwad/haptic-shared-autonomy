@@ -12,7 +12,7 @@ STATE_H = 96
 frames_per_state = 4
 n_actions = 15
 RANDOM_ACTION_PROB = 0
-RANDOM_ACTION_PROB_INC = 0.025
+RANDOM_ACTION_PROB_INC = 0
 action_space = [i for i in range(n_actions)]
 
 if __name__ == "__main__":
@@ -32,13 +32,14 @@ if __name__ == "__main__":
         epsilon=1,
         batch_size=64,
         n_actions=n_actions,
-        eps_end=0.05,
+        eps_end=0.01,
         input_dims=(96, 96, frames_per_state + 1),
         lr=0.003,
         max_mem_size=5000,
-        max_q_target_iter=10000,
+        max_q_target_iter=300,
         alpha=ALPHA,
         observation_space=env.observation_space,
+        cuda_index=1,
     )
     if LOAD_MODEL:
         model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.6")

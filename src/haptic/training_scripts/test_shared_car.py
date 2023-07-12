@@ -5,11 +5,13 @@ import numpy as np
 import torch as th
 import matplotlib.pyplot as plt
 
-ALPHA = 1
+ALPHA = 0.4
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
 n_actions = 15
+RANDOM_ACTION_PROB = 0.5
+
 
 if __name__ == "__main__":
     env = CarRacingShared(
@@ -35,8 +37,9 @@ if __name__ == "__main__":
         max_q_target_iter=300,
         alpha=ALPHA,
         observation_space=env.observation_space,
+        cuda_index=1,
     )
-    model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.4")
+    model = th.load("trials/models/final_model_DQN_Car_Racer_alpha_0.6")
     agent.Q_pred = model
     print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
@@ -53,7 +56,6 @@ if __name__ == "__main__":
             #     break
             env.render()
             episode_steps += 1
-            # pi_action = env.action_space.sample()
             state = (
                 th.tensor(observation[:, :, 0:4])
                 .to(agent.Q_pred.device)
@@ -62,6 +64,8 @@ if __name__ == "__main__":
             )
 
             pi_action, _ = pilot.predict(state)
+            if np.random.random() < RANDOM_ACTION_PROB:
+                pi_action = env.action_space.sample()
             pi_frame = pi_action * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame
             action = agent.choose_action(observation)
