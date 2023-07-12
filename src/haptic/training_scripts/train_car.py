@@ -29,17 +29,18 @@ if __name__ == "__main__":
         eps_end=0.05,
         eps_dec=5e-6,
         input_dims=(96, 96, frames_per_state),
-        lr=0.003,
+        lr=0.0001,
         max_mem_size=5000,
-        max_q_target_iter=300,
+        max_q_target_iter=10000,
         observation_space=env.observation_space,
+        cuda_index=1
     )
     if LOAD_MODEL:
         model = th.load("trials/models/final_model_custom_DQN_Car_Racer")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 500
+    n_games = 1000
     total_steps = 0
     max_avg_score = -np.inf
     for i in range(n_games):
