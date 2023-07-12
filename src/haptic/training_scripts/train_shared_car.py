@@ -5,13 +5,14 @@ import numpy as np
 import torch as th
 import matplotlib.pyplot as plt
 
-LOAD_MODEL = True
+LOAD_MODEL = False
 ALPHA = 0.6
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
 n_actions = 15
-RANDOM_ACTION_PROB = 0.2
+RANDOM_ACTION_PROB = 0
+RANDOM_ACTION_PROB_INC = 0.025
 action_space = [i for i in range(n_actions)]
 
 if __name__ == "__main__":
@@ -35,16 +36,16 @@ if __name__ == "__main__":
         input_dims=(96, 96, frames_per_state + 1),
         lr=0.003,
         max_mem_size=5000,
-        max_q_target_iter=300,
+        max_q_target_iter=10000,
         alpha=ALPHA,
         observation_space=env.observation_space,
     )
     if LOAD_MODEL:
-        model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.4")
+        model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.6")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 300
+    n_games = 500
     total_steps = 0
     pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_CAR")
     max_avg_score = -np.inf
@@ -54,8 +55,8 @@ if __name__ == "__main__":
         observation = env.reset()
         episode_steps = 0
         while not done:
-            # if episode_steps >= 500:
-            #     break
+            if total_steps % 50_000 == 0:
+                RANDOM_ACTION_PROB+=RANDOM_ACTION_PROB_INC
             episode_steps += 1
             # pi_action = env.action_space.sample()
             state = (
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             model = agent.Q_pred
             th.save(
                 model,
-                "trials/models/best_model_DQN_Car_Racer_alpha_0.4",
+                "trials/models/best_model_DQN_Car_Racer_alpha_0.6",
             )
             print("\n saving best model \n")
             max_avg_score = avg_scores[i]
@@ -108,7 +109,7 @@ if __name__ == "__main__":
         if total_steps % 5000 == 0:
             th.save(
                 model,
-                "trials/models/final_model_DQN_Car_Racer_alpha_0.4",
+                "trials/models/final_model_DQN_Car_Racer_alpha_0.6",
             )
             print("\n saving model every 5000 steps \n")
 
@@ -118,12 +119,12 @@ if __name__ == "__main__":
         plt.ylabel("average score")
         plt.title("average score during training")
         # plt.show()
-        plt.savefig(f"trials/graphs/DQN_Car_Racer_alpha_0.4.png")
+        plt.savefig(f"trials/graphs/DQN_Car_Racer_alpha_0.6.png")
         # plt.close()
 
     model = agent.Q_pred
     th.save(
         model,
-        "trials/models/final_model_DQN_Car_Racer_alpha_0.4",
+        "trials/models/final_model_DQN_Car_Racer_alpha_0.6",
     )
     print("\n saving final model \n")
