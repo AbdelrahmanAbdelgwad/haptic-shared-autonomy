@@ -355,6 +355,10 @@ class CarRacing(gym.Env, EzPickle):
                                      LEFT_LEVEL_3, LEFT_LEVEL_4, LEFT_LEVEL_5, RIGHT_LEVEL_1 , RIGHT_LEVEL_2,
                                      RIGHT_LEVEL_3, RIGHT_LEVEL_4, RIGHT_LEVEL_5, SOFT_ACCELERATE,
                                      HARD_ACCELERATE, SOFT_BREAK, HARD_BREAK]
+                                     - "smooth_steering" actions are 11 [NOTHING, LEFT_LEVEL_1, LEFT_LEVEL_2,
+                                     LEFT_LEVEL_3, LEFT_LEVEL_4, LEFT_LEVEL_5, RIGHT_LEVEL_1 , RIGHT_LEVEL_2,
+                                     RIGHT_LEVEL_3, RIGHT_LEVEL_4, RIGHT_LEVEL_5] 
+                                     Notice that all actions here are on 0.6 gas level
 
     min_step_reward (flt -inf)    To limit the min reward the agent can have in an episode, -np.inf means no limit
                                      it is good to control the gradient
@@ -449,6 +453,19 @@ class CarRacing(gym.Env, EzPickle):
             "HARD_ACCELERATE",
             "SOFT_BREAK",
             "HARD_BREAK",
+        )
+        self.possible_smooth_steering_actions = (
+            "NOTHING",
+            "LEFT_LEVEL_1",
+            "LEFT_LEVEL_2",
+            "LEFT_LEVEL_3",
+            "LEFT_LEVEL_4",
+            "LEFT_LEVEL_5",
+            "RIGHT_LEVEL_1",
+            "RIGHT_LEVEL_2",
+            "RIGHT_LEVEL_3",
+            "RIGHT_LEVEL_4",
+            "RIGHT_LEVEL_5",
         )
         self.fd_tile = fixtureDef(
             shape=polygonShape(vertices=[(0, 0), (1, 0), (1, -1), (0, -1)])
@@ -554,7 +571,7 @@ class CarRacing(gym.Env, EzPickle):
 
         self.discretize_actions = (
             discretize_actions
-            if discretize_actions in [None, "hard", "soft", "smooth"]
+            if discretize_actions in [None, "hard", "soft", "smooth", "smooth_steering"]
             else "hard"
         )
 
@@ -565,7 +582,9 @@ class CarRacing(gym.Env, EzPickle):
 
         state_shape = tuple(state_shape)
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
-        if self.discretize_actions == "smooth":
+        if self.discretize_actions == "smooth_steering":
+            self.action_space = spaces.Discrete(len(self.possible_smooth_steering_actions))
+        elif self.discretize_actions == "smooth":
             self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
         elif self.discretize_actions == "soft":
             self.action_space = spaces.Discrete(len(self.possible_soft_actions))
@@ -1955,6 +1974,34 @@ class CarRacing(gym.Env, EzPickle):
             self.state = new_frame
 
     def _transform_action(self, action):
+        if self.discretize_actions == "smooth_steering":
+            # "NOTHING", LEFT_LEVEL_1, LEFT_LEVEL_2, LEFT_LEVEL_3, LEFT_LEVEL_4,
+            # LEFT_LEVEL_5, RIGHT_LEVEL_1 , RIGHT_LEVEL_2, RIGHT_LEVEL_3, RIGHT_LEVEL_4,
+            # RIGHT_LEVEL_5
+            # All actions are at 0.6 gas
+            # Agent is only required to steer properly
+            if action == 0:
+                action = [0, 0.6, 0.0]  # "NOTHING"
+            if action == 1:
+                action = [-0.2, 0.6, 0.0]  # LEFT_LEVEL_1
+            if action == 2:
+                action = [-0.4, 0.6, 0.0]  # LEFT_LEVEL_2
+            if action == 3:
+                action = [-0.6, 0.6, 0.0]  # LEFT_LEVEL_3
+            if action == 4:
+                action = [-0.8, 0.6, 0.0]  # LEFT_LEVEL_4
+            if action == 5:
+                action = [-1, 0.6, 0.0]  # LEFT_LEVEL_5
+            if action == 6:
+                action = [0.2, 0.6, 0.0]  # RIGHT_LEVEL_1
+            if action == 7:
+                action = [0.4, 0.6, 0.0]  # RIGHT_LEVEL_2
+            if action == 8:
+                action = [0.6, 0.6, 0.0]  # RIGHT_LEVEL_3
+            if action == 9:
+                action = [0.8, 0.6, 0.0]  # RIGHT_LEVEL_4
+            if action == 10:
+                action = [1, 0.6, 0.0]  # RIGHT_LEVEL_5
         if self.discretize_actions == "smooth":
             # "NOTHING", # LEFT_LEVEL_1, # LEFT_LEVEL_2, # LEFT_LEVEL_3, # LEFT_LEVEL_4,
             # # LEFT_LEVEL_5, RIGHT_LEVEL_1 , # RIGHT_LEVEL_2, # RIGHT_LEVEL_3, # RIGHT_LEVEL_4,
@@ -2886,7 +2933,7 @@ class CarRacingShared(CarRacing):
 
         self.discretize_actions = (
             discretize_actions
-            if discretize_actions in [None, "hard", "soft", "smooth"]
+            if discretize_actions in [None, "hard", "soft", "smooth", "smooth_steering"]
             else "hard"
         )
 
@@ -2897,7 +2944,9 @@ class CarRacingShared(CarRacing):
 
         state_shape = list(state_shape)
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
-        if self.discretize_actions == "smooth":
+        if self.discretize_actions == "smooth_steering":
+            self.action_space = spaces.Discrete(len(self.possible_smooth_steering_actions))
+        elif self.discretize_actions == "smooth":
             self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
         elif self.discretize_actions == "soft":
             self.action_space = spaces.Discrete(len(self.possible_soft_actions))

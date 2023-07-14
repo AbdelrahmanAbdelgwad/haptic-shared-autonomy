@@ -8,7 +8,7 @@ import tensorflow as tf
 
 
 class DeepQNetwork(nn.Module):
-    def __init__(self, lr, n_actions, observation_space, cuda_index=1):
+    def __init__(self, lr, n_actions, observation_space, cuda_index=0):
         super().__init__()
         self.n_actions = n_actions
         n_input_channels = observation_space.shape[-1]
@@ -76,7 +76,7 @@ class Agent:
         eps_dec=5e-4,
         max_q_target_iter=300,
         alpha=0.6,
-        cuda_index=1,
+        cuda_index=0,
     ):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -125,8 +125,6 @@ class Agent:
         self.target_cntr += 1
 
     def choose_action(self, observation):
-        from haptic.gym.spaces.box import Box
-
         if np.random.random() > self.epsilon:
             observation = th.tensor(observation).to(self.Q_pred.device)
             q_values = self.Q_pred.forward(observation).cpu().data.numpy()

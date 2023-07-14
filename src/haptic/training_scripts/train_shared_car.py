@@ -57,7 +57,7 @@ if __name__ == "__main__":
         episode_steps = 0
         while not done:
             if total_steps % 50_000 == 0:
-                RANDOM_ACTION_PROB+=RANDOM_ACTION_PROB_INC
+                RANDOM_ACTION_PROB += RANDOM_ACTION_PROB_INC
             episode_steps += 1
             # pi_action = env.action_space.sample()
             state = (
