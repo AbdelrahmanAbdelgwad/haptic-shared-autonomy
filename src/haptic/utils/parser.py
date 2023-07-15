@@ -70,9 +70,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--action-disc-level",
         type=str,
-        default="smooth",
+        default="smooth_steering",
         dest="action_disc_level",
-        choices=["hard", "soft", "smooth"],
+        choices=["hard", "soft", "smooth","smooth_steering"],
         help="What level of action discretization to use (default: %(default)s)",
     )
     parser.add_argument(

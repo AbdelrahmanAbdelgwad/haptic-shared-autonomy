@@ -1981,27 +1981,27 @@ class CarRacing(gym.Env, EzPickle):
             # All actions are at 0.6 gas
             # Agent is only required to steer properly
             if action == 0:
-                action = [0, 0.6, 0.0]  # "NOTHING"
+                action = [0, 0.4, 0.1]  # "NOTHING"
             if action == 1:
-                action = [-0.2, 0.6, 0.0]  # LEFT_LEVEL_1
+                action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
             if action == 2:
-                action = [-0.4, 0.6, 0.0]  # LEFT_LEVEL_2
+                action = [-0.4, 0.4, 0.05]  # LEFT_LEVEL_2
             if action == 3:
-                action = [-0.6, 0.6, 0.0]  # LEFT_LEVEL_3
+                action = [-0.6, 0.4, 0.05]  # LEFT_LEVEL_3
             if action == 4:
-                action = [-0.8, 0.6, 0.0]  # LEFT_LEVEL_4
+                action = [-0.8, 0.4, 0.05]  # LEFT_LEVEL_4
             if action == 5:
-                action = [-1, 0.6, 0.0]  # LEFT_LEVEL_5
+                action = [-1, 0.4, 0.05]  # LEFT_LEVEL_5
             if action == 6:
-                action = [0.2, 0.6, 0.0]  # RIGHT_LEVEL_1
+                action = [0.2, 0.4, 0.05]  # RIGHT_LEVEL_1
             if action == 7:
-                action = [0.4, 0.6, 0.0]  # RIGHT_LEVEL_2
+                action = [0.4, 0.4, 0.05]  # RIGHT_LEVEL_2
             if action == 8:
-                action = [0.6, 0.6, 0.0]  # RIGHT_LEVEL_3
+                action = [0.6, 0.4, 0.05]  # RIGHT_LEVEL_3
             if action == 9:
-                action = [0.8, 0.6, 0.0]  # RIGHT_LEVEL_4
+                action = [0.8, 0.4, 0.05]  # RIGHT_LEVEL_4
             if action == 10:
-                action = [1, 0.6, 0.0]  # RIGHT_LEVEL_5
+                action = [1, 0.4, 0.05]  # RIGHT_LEVEL_5
         if self.discretize_actions == "smooth":
             # "NOTHING", # LEFT_LEVEL_1, # LEFT_LEVEL_2, # LEFT_LEVEL_3, # LEFT_LEVEL_4,
             # # LEFT_LEVEL_5, RIGHT_LEVEL_1 , # RIGHT_LEVEL_2, # RIGHT_LEVEL_3, # RIGHT_LEVEL_4,
