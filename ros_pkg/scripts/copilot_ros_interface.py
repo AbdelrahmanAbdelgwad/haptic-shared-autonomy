@@ -115,10 +115,11 @@ def main(alpha: float, total_timesteps: int, trial: str):
     rospy.init_node("car_control_node")
     agent_steering_pub = rospy.Publisher("/agent", Float32, queue_size=10)
     score_pub = rospy.Publisher("/score", Float32, queue_size=10)
-
+    done = False
     # rospy.spin()
     # while not rospy.is_shutdown():
-    for timestep in range(total_timesteps):
+    timestep = 0
+    while not done:
         msg = rospy.wait_for_message("/counter", Int32)
         if timestep == 0:
             zero_counter = msg.data
@@ -134,7 +135,7 @@ def main(alpha: float, total_timesteps: int, trial: str):
             pi_action = action
         else:
             pi_action = cont2disc(human_steering_action)
-        print(pi_action)
+        # print(pi_action)
         env.render()
         pi_frame = pi_action * np.ones((STATE_W, STATE_H))
         observation[:, :, 4] = pi_frame
@@ -146,8 +147,13 @@ def main(alpha: float, total_timesteps: int, trial: str):
         # agent_steering_pub.publish(agent_steering_action)
         score += reward
         score_pub.publish(score)
-        # print(f"\n score of {total_timesteps} timessteps is {score} \n")
-    # env.reset()
+        print("timestep is", timestep, "\n")
+        if done and (timestep < total_timesteps):
+            env.reset()
+            done = False
+        if timestep >= total_timesteps:
+            break
+        timestep += 1
     env.close()
 
 

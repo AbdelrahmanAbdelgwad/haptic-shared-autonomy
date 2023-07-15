@@ -61,10 +61,11 @@ def main(alpha: float, total_timesteps: int, trial: str):
     rospy.init_node("car_control_node")
     agent_steering_pub = rospy.Publisher("/agent", Float32, queue_size=10)
     score_pub = rospy.Publisher("/score", Float32, queue_size=10)
-
+    done = False
     # rospy.spin()
     # while not rospy.is_shutdown():
-    for timestep in range(total_timesteps):
+    timestep = 0
+    while not done:
         msg = rospy.wait_for_message("/counter", Int32)
         if timestep == 0:
             zero_counter = msg.data
@@ -85,13 +86,18 @@ def main(alpha: float, total_timesteps: int, trial: str):
         agent_steering_pub.publish(agent_steering_action)
         score += reward
         score_pub.publish(score)
-        # print(f"\n score of {total_timesteps} timessteps is {score} \n")
-    # env.reset()
+        print("timestep is", timestep, "\n")
+        if done and (timestep < total_timesteps):
+            env.reset()
+            done = False
+        if timestep >= total_timesteps:
+            break
+        timestep += 1
     env.close()
 
 
 if __name__ == "__main__":
     alpha = 0.6
-    total_timesteps = 1000
+    total_timesteps = 500
     trial_name = f"trial_9_alpha_{alpha}"
     main(alpha, total_timesteps, trial_name)
