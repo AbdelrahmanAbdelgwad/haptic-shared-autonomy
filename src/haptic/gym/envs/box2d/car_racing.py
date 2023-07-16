@@ -3268,6 +3268,12 @@ class CarRacingSharedStablebaselines3(CarRacing):
         return obs
 
     def step(self, action):
+        state = self.state[:, :, 0:4]
+        pi_action, _ = self.pilot.predict(state)
+        if np.random.random() < self.RANDOM_ACTION_PROB:
+            pi_action = env.action_space.sample()
+        pi_action_steering = disc2cont(pi_action)[0]
+
         action = self._transform_action(action)
 
         if action is not None:
@@ -3297,12 +3303,6 @@ class CarRacingSharedStablebaselines3(CarRacing):
         if self.auto_render:
             self.render()
 
-        state = self.state[:, :, 0:4]
-        pi_action, _ = self.pilot.predict(state)
-        if np.random.random() < self.RANDOM_ACTION_PROB:
-            pi_action = env.action_space.sample()
-        pi_action_steering = disc2cont(pi_action)[0]
-        # print(pi_action_steering)
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         self.state[:, :, 4] = pi_frame
         return self.state, step_reward, done, {}
