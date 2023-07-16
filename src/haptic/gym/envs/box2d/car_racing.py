@@ -357,7 +357,7 @@ class CarRacing(gym.Env, EzPickle):
                                      HARD_ACCELERATE, SOFT_BREAK, HARD_BREAK]
                                      - "smooth_steering" actions are 11 [NOTHING, LEFT_LEVEL_1, LEFT_LEVEL_2,
                                      LEFT_LEVEL_3, LEFT_LEVEL_4, LEFT_LEVEL_5, RIGHT_LEVEL_1 , RIGHT_LEVEL_2,
-                                     RIGHT_LEVEL_3, RIGHT_LEVEL_4, RIGHT_LEVEL_5] 
+                                     RIGHT_LEVEL_3, RIGHT_LEVEL_4, RIGHT_LEVEL_5]
                                      Notice that all actions here are on 0.6 gas level
 
     min_step_reward (flt -inf)    To limit the min reward the agent can have in an episode, -np.inf means no limit
@@ -583,7 +583,9 @@ class CarRacing(gym.Env, EzPickle):
         state_shape = tuple(state_shape)
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
         if self.discretize_actions == "smooth_steering":
-            self.action_space = spaces.Discrete(len(self.possible_smooth_steering_actions))
+            self.action_space = spaces.Discrete(
+                len(self.possible_smooth_steering_actions)
+            )
         elif self.discretize_actions == "smooth":
             self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
         elif self.discretize_actions == "soft":
@@ -2945,7 +2947,9 @@ class CarRacingShared(CarRacing):
         state_shape = list(state_shape)
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
         if self.discretize_actions == "smooth_steering":
-            self.action_space = spaces.Discrete(len(self.possible_smooth_steering_actions))
+            self.action_space = spaces.Discrete(
+                len(self.possible_smooth_steering_actions)
+            )
         elif self.discretize_actions == "smooth":
             self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
         elif self.discretize_actions == "soft":
