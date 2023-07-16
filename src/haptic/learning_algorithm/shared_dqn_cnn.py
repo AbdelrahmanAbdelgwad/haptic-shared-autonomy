@@ -6,6 +6,30 @@ import torch.optim as optim
 import numpy as np
 import tensorflow as tf
 
+def steering2action(action):
+    if action == 0:
+        action = 0  # "NOTHING"
+    if action == -0.2:
+        action = 1  # LEFT_LEVEL_1
+    if action == -0.4:
+        action = 2  # LEFT_LEVEL_2
+    if action == -0.6:
+        action = 3  # LEFT_LEVEL_3
+    if action == -0.8:
+        action = 4  # LEFT_LEVEL_4
+    if action == -1:
+        action = 5  # LEFT_LEVEL_5
+    if action == 0.2:
+        action = 6  # RIGHT_LEVEL_1
+    if action == 0.4:
+        action = 7  # RIGHT_LEVEL_2
+    if action == 0.6:
+        action = 8  # RIGHT_LEVEL_3
+    if action == 0.8:
+        action = 9  # RIGHT_LEVEL_4
+    if action == 1:
+        action = 10  # RIGHT_LEVEL_5
+    return action
 
 def steering2action(action):
     if action == 0:
