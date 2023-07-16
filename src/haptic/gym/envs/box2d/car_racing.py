@@ -115,6 +115,32 @@ SHOW_BETA_PI_ANGLE = 0  # Shows the direction of the beta+pi/2 angle in each til
 FORBID_HARD_TURNS_IN_INTERSECTIONS = False
 
 
+def disc2cont(action):
+    if action == 0:
+        action = [0, 0.4, 0.1]  # "NOTHING"
+    if action == 1:
+        action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
+    if action == 2:
+        action = [-0.4, 0.4, 0.05]  # LEFT_LEVEL_2
+    if action == 3:
+        action = [-0.6, 0.4, 0.05]  # LEFT_LEVEL_3
+    if action == 4:
+        action = [-0.8, 0.4, 0.05]  # LEFT_LEVEL_4
+    if action == 5:
+        action = [-1, 0.4, 0.05]  # LEFT_LEVEL_5
+    if action == 6:
+        action = [0.2, 0.4, 0.05]  # RIGHT_LEVEL_1
+    if action == 7:
+        action = [0.4, 0.4, 0.05]  # RIGHT_LEVEL_2
+    if action == 8:
+        action = [0.6, 0.4, 0.05]  # RIGHT_LEVEL_3
+    if action == 9:
+        action = [0.8, 0.4, 0.05]  # RIGHT_LEVEL_4
+    if action == 10:
+        action = [1, 0.4, 0.05]  # RIGHT_LEVEL_5
+    return action
+
+
 def key_press_example(k, mod):
     from pyglet.window import key
 
@@ -3046,6 +3072,239 @@ class CarRacingShared(CarRacing):
             self.render()
         pi_frame = pi_action * np.ones((STATE_W, STATE_H))
         self.state[:, :, -1] = pi_frame
+        return self.state, step_reward, done, {}
+
+
+from stable_baselines3 import DQN
+
+
+class CarRacingSharedStablebaselines3(CarRacing):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
+        self.RANDOM_ACTION_PROB = 0
+
+    def _set_config(
+        self,
+        num_tracks=1,
+        num_lanes=1,
+        num_lanes_changes=0,
+        num_obstacles=0,
+        max_single_lane=0,
+        max_time_out=2.0,
+        grayscale=False,
+        show_info_panel=False,
+        frames_per_state=1,
+        discretize_actions="smooth_steering",
+        allow_reverse=0,
+        min_step_reward=-np.inf,
+        max_step_reward=+np.inf,
+        animate_zoom=False,
+        reward_fn=default_reward_callback,
+        key_press_fn=None,
+        key_release_fn=None,
+        verbose=1,
+        random_obstacle_x_position=True,
+        random_obstacle_shape=True,
+        auto_render=False,
+        allow_outside=True,
+        load_tracks_from=None,
+    ):
+        self.allow_outside = allow_outside
+        self.auto_render = auto_render
+        self.reward_fn = reward_fn
+        self.random_obstacle_shape = random_obstacle_shape
+        self.random_obstacle_x_position = random_obstacle_x_position
+        self.verbose = verbose
+        self.animate_zoom = animate_zoom
+
+        if load_tracks_from is not None:
+            if os.path.isdir(load_tracks_from):
+                self.load_tracks_from = load_tracks_from
+                self.tracks_df = pd.read_csv(
+                    self.load_tracks_from + "/list.csv", index_col=0
+                )
+            else:
+                raise Exception("Folder specified in load_tracks_from does not exists")
+        else:
+            self.load_tracks_from = None
+
+        # Setting key press callback functions
+        self.key_press_fn = key_press_fn
+        self.key_release_fn = key_release_fn
+
+        # Number of lanes, 1 or 2
+        self.num_lanes = num_lanes if num_lanes in [1, 2] else 1
+
+        # Number of tracks, this control the complexity of the map
+        self.num_tracks = num_tracks if num_tracks > 0 and num_tracks <= 2 else 1
+
+        # Number of obstacles in the track
+        self.num_obstacles = num_obstacles if num_obstacles >= 0 else 0
+
+        # Number of points where lanes change from 1 lane to two and viceversa
+        self.num_lanes_changes = num_lanes_changes if num_lanes_changes >= 0 else 0
+
+        # Max number of tiles of a single lane road
+        self.max_single_lane = max_single_lane if max_single_lane > 10 else 50
+
+        # Allow reverse
+        self.allow_reverse = allow_reverse
+        min_speed = -1 if self.allow_reverse else 0
+
+        # Max time out of track
+        self.max_time_out = max_time_out if max_time_out >= 0 else 2.0
+
+        # Grayscale
+        self.grayscale = grayscale
+        state_shape = [STATE_H, STATE_W]
+        if not self.grayscale:
+            state_shape.append(3)
+            if frames_per_state > 1:
+                print("####################################")
+                print("Warning: making frames_per_state = 1")
+                print("No support for several frames in RGB")
+                frames_per_state = 1
+
+        # Show or not back bottom info panel
+        self.show_info_panel = show_info_panel
+
+        # Frames per state
+        self.frames_per_state = frames_per_state if frames_per_state > 0 else 1
+        if self.frames_per_state > 1:
+            state_shape.append(self.frames_per_state)
+
+            lst = list(range(self.frames_per_state + 1))
+            self._update_index = [lst[-1]] + lst[:-1]
+
+        self.discretize_actions = (
+            discretize_actions
+            if discretize_actions in [None, "hard", "soft", "smooth", "smooth_steering"]
+            else "hard"
+        )
+
+        if max_step_reward < min_step_reward:
+            raise AttributeError("max_step_reward must be greater than min_step_reward")
+        self.max_step_reward = max_step_reward
+        self.min_step_reward = min_step_reward
+
+        state_shape = list(state_shape)
+        # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
+        if self.discretize_actions == "smooth_steering":
+            self.action_space = spaces.Discrete(
+                len(self.possible_smooth_steering_actions)
+            )
+        elif self.discretize_actions == "smooth":
+            self.action_space = spaces.Discrete(len(self.possible_smooth_actions))
+        elif self.discretize_actions == "soft":
+            self.action_space = spaces.Discrete(len(self.possible_soft_actions))
+        elif self.discretize_actions == "hard":
+            self.action_space = spaces.Discrete(len(self.possible_hard_actions))
+        else:
+            self.action_space = spaces.Box(
+                np.array([-1, min_speed, 0]), np.array([+1, +1, +1]), dtype=np.float32
+            )  # steer, gas, brake
+        state_shape[-1] += 1
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=state_shape, dtype=np.uint8
+        )
+
+        # Set custom reward function
+        self.contactListener_keepref = FrictionDetector(self)
+        self.world = Box2D.b2World((0, 0), contactListener=self.contactListener_keepref)
+
+    def reset(self):
+        """
+        car_position [angle float, x float, y float]
+                     Position of the car
+                     Default: first tile of principal track
+        """
+        self._destroy()
+        self.reward = 0.0
+        self.full_reward = 0.0
+        self.highest_reward = 0.0
+        self.last_touch_with_track = 0.0
+        self.prev_reward = 0.0
+        self.tile_visited_count = 0
+        self.t = 0.0
+        self._current_nodes = {}
+        self._next_nodes = []
+        self.road_poly = []
+        self.border_poly = []
+        self.obstacles_poly = []
+        self.track = []
+        self.tracks = []
+        self.info = []
+        self.road = []
+        self.track_lanes = None
+        self.human_render = False
+        self.state = np.zeros(self.observation_space.shape)
+        self._steps_in_episode = 0
+
+        while True:
+            success = self._create_track()
+
+            if success:
+                if self._position_car_on_reset() is not False:
+                    break
+
+            if self.verbose > 0:
+                print(
+                    "retry to generate track (normal if there are not many of this messages)"
+                )
+
+        # there are 20 frames of noise at the begining
+        for _ in range(self.frames_per_state + 20):
+            obs = self.step(None)[0]
+
+        state = obs[:, :, 0:4]
+        pi_action, _ = self.pilot.predict(state)
+        if np.random.random() < self.RANDOM_ACTION_PROB:
+            pi_action = env.action_space.sample()
+        pi_action_steering = disc2cont(pi_action)[0]
+        # print(pi_action_steering)
+        pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
+        obs[:, :, 4] = pi_frame
+        return obs
+
+    def step(self, action):
+        action = self._transform_action(action)
+
+        if action is not None:
+            self._steps_in_episode += 1
+            self.car.steer(-action[0])
+            self.car.gas(action[1])
+            self.car.brake(action[2])
+
+        self.car.step(1.0 / FPS)
+        self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
+        self.t += 1.0 / FPS
+
+        # self.state = self.render("state_pixels") # Old code, only one frame
+        self._update_state(self.render("state_pixels"))
+
+        step_reward = 0
+        full_step_reward = 0
+        done = False
+        if action is not None:
+            step_reward, full_step_reward, done = self.reward_fn(self)
+
+        self.car.fuel_spent = 0.0
+
+        self.reward += step_reward
+        self.full_reward += full_step_reward
+
+        if self.auto_render:
+            self.render()
+
+        state = self.state[:, :, 0:4]
+        pi_action, _ = self.pilot.predict(state)
+        if np.random.random() < self.RANDOM_ACTION_PROB:
+            pi_action = env.action_space.sample()
+        pi_action_steering = disc2cont(pi_action)[0]
+        # print(pi_action_steering)
+        pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
+        self.state[:, :, 4] = pi_frame
         return self.state, step_reward, done, {}
 
 

@@ -5,22 +5,48 @@ import numpy as np
 import torch as th
 import matplotlib.pyplot as plt
 
-LOAD_MODEL = False
+LOAD_MODEL = True
 ALPHA = 0.6
 STATE_W = 96
 STATE_H = 96
 frames_per_state = 4
-n_actions = 15
+n_actions = 11
 RANDOM_ACTION_PROB = 0
 RANDOM_ACTION_PROB_INC = 0
-action_space = [i for i in range(n_actions)]
+
+
+def disc2cont(action):
+    if action == 0:
+        action = [0, 0.4, 0.1]  # "NOTHING"
+    if action == 1:
+        action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
+    if action == 2:
+        action = [-0.4, 0.4, 0.05]  # LEFT_LEVEL_2
+    if action == 3:
+        action = [-0.6, 0.4, 0.05]  # LEFT_LEVEL_3
+    if action == 4:
+        action = [-0.8, 0.4, 0.05]  # LEFT_LEVEL_4
+    if action == 5:
+        action = [-1, 0.4, 0.05]  # LEFT_LEVEL_5
+    if action == 6:
+        action = [0.2, 0.4, 0.05]  # RIGHT_LEVEL_1
+    if action == 7:
+        action = [0.4, 0.4, 0.05]  # RIGHT_LEVEL_2
+    if action == 8:
+        action = [0.6, 0.4, 0.05]  # RIGHT_LEVEL_3
+    if action == 9:
+        action = [0.8, 0.4, 0.05]  # RIGHT_LEVEL_4
+    if action == 10:
+        action = [1, 0.4, 0.05]  # RIGHT_LEVEL_5
+    return action
+
 
 if __name__ == "__main__":
     env = CarRacingShared(
         allow_reverse=False,
         grayscale=1,
         show_info_panel=1,
-        discretize_actions="smooth",  # n_actions = 5
+        discretize_actions="smooth_steering",  # n_actions = 11
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
@@ -29,7 +55,7 @@ if __name__ == "__main__":
     )
     agent = Agent(
         gamma=0.99,
-        epsilon=1,
+        epsilon=0.01,
         batch_size=64,
         n_actions=n_actions,
         eps_end=0.01,
@@ -39,18 +65,18 @@ if __name__ == "__main__":
         max_q_target_iter=300,
         alpha=ALPHA,
         observation_space=env.observation_space,
-        cuda_index=1,
+        cuda_index=0,
     )
     if LOAD_MODEL:
-        model = th.load("trials/models/best_model_DQN_Car_Racer_alpha_0.6")
+        model = th.load("trials/models/FINAL_COPILOT_SMOOTH_STEERING_CAR")
         agent.Q_pred = model
         print("\n model loaded successfully \n")
     scores, eps_history, avg_scores = [], [], []
-    n_games = 500
+    n_episodes = 500
     total_steps = 0
-    pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_CAR")
+    pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
     max_avg_score = -np.inf
-    for i in range(n_games):
+    for i in range(n_episodes):
         score = 0
         done = False
         observation = env.reset()
@@ -59,18 +85,19 @@ if __name__ == "__main__":
             if total_steps % 50_000 == 0:
                 RANDOM_ACTION_PROB += RANDOM_ACTION_PROB_INC
             episode_steps += 1
-            # pi_action = env.action_space.sample()
+            total_steps += 1
             state = (
                 th.tensor(observation[:, :, 0:4])
                 .to(agent.Q_pred.device)
                 .cpu()
                 .data.numpy()
             )
-
             pi_action, _ = pilot.predict(state)
             if np.random.random() < RANDOM_ACTION_PROB:
-                pi_action = np.random.choice(action_space)
-            pi_frame = pi_action * np.ones((STATE_W, STATE_H))
+                pi_action = env.action_space.sample()
+            pi_action_steering = disc2cont(pi_action)[0]
+            # print(pi_action_steering)
+            pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
             observation[:, :, 4] = pi_frame
             # print(flattened_obs.shape)
             action = agent.choose_action(observation)
@@ -81,11 +108,16 @@ if __name__ == "__main__":
             agent.store_transitions(observation, action, reward, observation_, done)
             agent.learn()
             observation = observation_
+            if total_steps % 5000 == 0:
+                th.save(
+                    model,
+                    "trials/models/FINAL_COPILOT_SMOOTH_STEERING_CAR",
+                )
+                print("\n saving model every 5000 steps \n")
         scores.append(score)
         eps_history.append(agent.epsilon)
         avg_score = np.mean(scores[-100:])
         avg_scores.append(avg_score)
-        total_steps += episode_steps
 
         print(
             "episode",
@@ -100,19 +132,12 @@ if __name__ == "__main__":
             model = agent.Q_pred
             th.save(
                 model,
-                "trials/models/best_model_DQN_Car_Racer_alpha_0.6",
+                "trials/models/BEST_COPILOT_SMOOTH_STEERING_CAR",
             )
             print("\n saving best model \n")
             max_avg_score = avg_scores[i]
         if total_steps > 1000_000:
             break
-
-        if total_steps % 5000 == 0:
-            th.save(
-                model,
-                "trials/models/final_model_DQN_Car_Racer_alpha_0.6",
-            )
-            print("\n saving model every 5000 steps \n")
 
         # build the plot
         plt.plot(avg_scores)
@@ -126,6 +151,6 @@ if __name__ == "__main__":
     model = agent.Q_pred
     th.save(
         model,
-        "trials/models/final_model_DQN_Car_Racer_alpha_0.6",
+        "trials/models/FINAL_COPILOT_SMOOTH_STEERING_CAR",
     )
     print("\n saving final model \n")

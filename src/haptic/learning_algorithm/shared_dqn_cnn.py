@@ -7,6 +7,32 @@ import numpy as np
 import tensorflow as tf
 
 
+def steering2action(action):
+    if action == 0:
+        action = 0  # "NOTHING"
+    if action == -0.2:
+        action = 1  # LEFT_LEVEL_1
+    if action == -0.4:
+        action = 2  # LEFT_LEVEL_2
+    if action == -0.6:
+        action = 3  # LEFT_LEVEL_3
+    if action == -0.8:
+        action = 4  # LEFT_LEVEL_4
+    if action == -1:
+        action = 5  # LEFT_LEVEL_5
+    if action == 0.2:
+        action = 6  # RIGHT_LEVEL_1
+    if action == 0.4:
+        action = 7  # RIGHT_LEVEL_2
+    if action == 0.6:
+        action = 8  # RIGHT_LEVEL_3
+    if action == 0.8:
+        action = 9  # RIGHT_LEVEL_4
+    if action == 1:
+        action = 10  # RIGHT_LEVEL_5
+    return action
+
+
 class DeepQNetwork(nn.Module):
     def __init__(self, lr, n_actions, observation_space, cuda_index=0):
         super().__init__()
@@ -134,7 +160,8 @@ class Agent:
             # opt_q_values = q_values[0][opt_action]
             opt_q_values = q_values[opt_action]
             # pi_action = int(observation[8])
-            pi_action = int(observation.cpu().data.numpy()[:, :, -1][0][0])
+            pi_action_steering = observation.cpu().data.numpy()[:, :, -1][0][0]
+            pi_action = steering2action(pi_action_steering)
             # pi_act_q_values = q_values[0][pi_action]
             pi_act_q_values = q_values[pi_action]
 
