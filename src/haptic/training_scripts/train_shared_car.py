@@ -20,7 +20,7 @@ if __name__ == "__main__":
         allow_reverse=False,
         grayscale=1,
         show_info_panel=1,
-        discretize_actions="smooth",  # n_actions = 5
+        discretize_actions="smooth_steering",  # n_actions = 15
         num_tracks=2,
         num_lanes=2,
         num_lanes_changes=4,
