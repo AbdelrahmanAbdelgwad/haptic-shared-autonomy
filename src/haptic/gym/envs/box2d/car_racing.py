@@ -3082,7 +3082,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
-        self.RANDOM_ACTION_PROB = 1
+        self.RANDOM_ACTION_PROB = 0.2
 
     def _set_config(
         self,

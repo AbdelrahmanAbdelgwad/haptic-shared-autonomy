@@ -14,6 +14,7 @@ env = CarRacingSharedStablebaselines3(
     frames_per_state=4,
 )
 
-model = DQN(CnnPolicy, env, buffer_size=100_000, verbose=1, copilot=True)
+# model = DQN(CnnPolicy, env, buffer_size=100_000, verbose=1, copilot=True)
+model = DQN.load("copilot_stablebaselines3", env=env)
 model.learn(total_timesteps=1000_000, log_interval=4)
 model.save("copilot_stablebaselines3")
