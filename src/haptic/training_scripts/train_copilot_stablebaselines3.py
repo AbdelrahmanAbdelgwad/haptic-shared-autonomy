@@ -1,4 +1,4 @@
-from stable_baselines3 import DQN
+from stable_baselines3.dqn.dqn import DQN
 from stable_baselines3.dqn import CnnPolicy
 from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
 
@@ -14,6 +14,6 @@ env = CarRacingSharedStablebaselines3(
     frames_per_state=4,
 )
 
-model = DQN(CnnPolicy, env, buffer_size=5000, verbose=1, copilot=True)
-model.learn(total_timesteps=500_000, log_interval=4)
+model = DQN(CnnPolicy, env, buffer_size=100_000, verbose=1, copilot=True)
+model.learn(total_timesteps=1000_000, log_interval=4)
 model.save("copilot_stablebaselines3")
