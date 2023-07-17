@@ -3079,10 +3079,14 @@ from stable_baselines3 import DQN
 
 
 class CarRacingSharedStablebaselines3(CarRacing):
-    def __init__(self, **kwargs):
+    def __init__(self, pilot:str,pilot_type:str,random_action_prob:float,laggy_pilot_freq:int,
+    **kwargs):
         super().__init__(**kwargs)
-        self.pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
-        self.RANDOM_ACTION_PROB = 0.2
+        self.pilot = DQN.load(pilot)
+        self.RANDOM_ACTION_PROB = random_action_prob
+        self.pilot_type = pilot_type
+        self.laggy_pilot_freq = laggy_pilot_freq
+        self.laggy_pilot_counter = 0
 
     def _set_config(
         self,
@@ -3256,13 +3260,26 @@ class CarRacingSharedStablebaselines3(CarRacing):
         # there are 20 frames of noise at the begining
         for _ in range(self.frames_per_state + 20):
             obs = self.step(None)[0]
-
+        
         state = obs[:, :, 0:4]
-        pi_action, _ = self.pilot.predict(state)
-        if np.random.random() < self.RANDOM_ACTION_PROB:
-            pi_action = self.action_space.sample()
-        pi_action_steering = disc2cont(pi_action)[0]
-        # print(pi_action_steering)
+
+        if self.pilot_type == "noisy_pilot":
+            print("noisy_pilot")
+            self.pi_action, _ = self.pilot.predict(state)
+            if np.random.random() < self.RANDOM_ACTION_PROB:
+                self.pi_action = self.action_space.sample()
+        elif self.pilot_type == "laggy_pilot":
+            print("laggy_pilot")
+            if self.laggy_pilot_counter % self.laggy_pilot_freq == 0:
+                self.pi_action, _ = self.pilot.predict(state)
+            self.laggy_pilot_counter+=1
+        elif self.pilot_type == "none_pilot":
+            print("none_pilot")
+            self.pi_action = 0
+        elif self.pilot_type == "optimal_pilot":
+            print("optimal_pilot")
+            self.pi_action, _ = self.pilot.predict(state)
+        pi_action_steering = disc2cont(self.pi_action)[0]
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         obs[:, :, 4] = pi_frame
         return obs
@@ -3298,11 +3315,26 @@ class CarRacingSharedStablebaselines3(CarRacing):
             self.render()
 
         state = self.state[:, :, 0:4]
-        pi_action, _ = self.pilot.predict(state)
-        if np.random.random() < self.RANDOM_ACTION_PROB:
-            pi_action = self.action_space.sample()
-        pi_action_steering = disc2cont(pi_action)[0]
-        # print(pi_action_steering)
+
+        if self.pilot_type == "noisy_pilot":
+            print("noisy_pilot")
+            self.pi_action, _ = self.pilot.predict(state)
+            if np.random.random() < self.RANDOM_ACTION_PROB:
+                self.pi_action = self.action_space.sample()
+        elif self.pilot_type == "laggy_pilot":
+            print("laggy_pilot")
+            print(self.laggy_pilot_counter % self.laggy_pilot_freq == 0)
+            if self.laggy_pilot_counter % self.laggy_pilot_freq == 0:
+                self.pi_action, _ = self.pilot.predict(state)
+            self.laggy_pilot_counter+=1
+        elif self.pilot_type == "none_pilot":
+            print("none_pilot")
+            self.pi_action = 0
+        elif self.pilot_type == "optimal_pilot":
+            print("optimal_pilot")
+            self.pi_action, _ = self.pilot.predict(state)
+
+        pi_action_steering = disc2cont(self.pi_action)[0]
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         self.state[:, :, 4] = pi_frame
         return self.state, step_reward, done, {}

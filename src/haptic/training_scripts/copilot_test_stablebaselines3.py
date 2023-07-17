@@ -11,8 +11,12 @@ env = CarRacingSharedStablebaselines3(
     num_lanes_changes=4,
     max_time_out=5,
     frames_per_state=4,
+    pilot="trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR",
+    pilot_type="laggy_pilot",
+    random_action_prob = 0.2,
+    laggy_pilot_freq = 4
 )
-env = wrappers.Monitor(env, "./copilot_with_random_policy_video/", force=True)
+env = wrappers.Monitor(env, "./copilot_with_50%_random_pilot_video/", force=True)
 model = DQN.load("copilot_stablebaselines3")
 t = 0
 done = False

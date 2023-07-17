@@ -12,6 +12,10 @@ env = CarRacingSharedStablebaselines3(
     num_lanes_changes=4,
     max_time_out=5,
     frames_per_state=4,
+    pilot="trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR",
+    pilot_type="none",
+    random_action_prob = 0.2,
+    laggy_pilot_freq = 4
 )
 
 # model = DQN(CnnPolicy, env, buffer_size=100_000, verbose=1, copilot=True)
