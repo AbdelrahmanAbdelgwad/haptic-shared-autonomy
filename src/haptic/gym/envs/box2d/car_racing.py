@@ -3082,7 +3082,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.pilot = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
-        self.RANDOM_ACTION_PROB = 0
+        self.RANDOM_ACTION_PROB = 0.2
 
     def _set_config(
         self,
@@ -3260,7 +3260,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         state = obs[:, :, 0:4]
         pi_action, _ = self.pilot.predict(state)
         if np.random.random() < self.RANDOM_ACTION_PROB:
-            pi_action = env.action_space.sample()
+            pi_action = self.action_space.sample()
         pi_action_steering = disc2cont(pi_action)[0]
         # print(pi_action_steering)
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
@@ -3300,7 +3300,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         state = self.state[:, :, 0:4]
         pi_action, _ = self.pilot.predict(state)
         if np.random.random() < self.RANDOM_ACTION_PROB:
-            pi_action = env.action_space.sample()
+            pi_action = self.action_space.sample()
         pi_action_steering = disc2cont(pi_action)[0]
         # print(pi_action_steering)
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
