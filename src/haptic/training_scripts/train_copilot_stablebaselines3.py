@@ -13,7 +13,7 @@ env = CarRacingSharedStablebaselines3(
     max_time_out=5,
     frames_per_state=4,
     pilot="trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR",
-    pilot_type="none",
+    pilot_type="laggy_pilot",
     random_action_prob = 0.2,
     laggy_pilot_freq = 4
 )
