@@ -3318,21 +3318,21 @@ class CarRacingSharedStablebaselines3(CarRacing):
         state = self.state[:, :, 0:4]
 
         if self.pilot_type == "noisy_pilot":
-            print("noisy_pilot")
+            # print("noisy_pilot")
             self.pi_action, _ = self.pilot.predict(state)
             if np.random.random() < self.RANDOM_ACTION_PROB:
                 self.pi_action = self.action_space.sample()
         elif self.pilot_type == "laggy_pilot":
-            print("laggy_pilot")
+            # print("laggy_pilot")
             # print(self.laggy_pilot_counter % self.laggy_pilot_freq == 0)
             if self.laggy_pilot_counter % self.laggy_pilot_freq == 0:
                 self.pi_action, _ = self.pilot.predict(state)
             self.laggy_pilot_counter+=1
         elif self.pilot_type == "none_pilot":
-            print("none_pilot")
+            # print("none_pilot")
             self.pi_action = 0
         elif self.pilot_type == "optimal_pilot":
-            print("optimal_pilot")
+            # print("optimal_pilot")
             self.pi_action, _ = self.pilot.predict(state)
 
         pi_action_steering = disc2cont(self.pi_action)[0]
