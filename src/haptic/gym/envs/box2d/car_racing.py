@@ -3075,8 +3075,18 @@ class CarRacingShared(CarRacing):
         return self.state, step_reward, done, {}
 
 
-from stable_baselines3 import DQN
-
+from stable_baselines3.dqn.dqn import DQN as DQN_pilot
+# env = CarRacing(
+#             allow_reverse=False,
+#             grayscale=1,
+#             show_info_panel=1,
+#             discretize_actions="smooth_steering",  # n_actions = 11
+#             num_tracks=2,
+#             num_lanes=2,
+#             num_lanes_changes=4,
+#             max_time_out=5,
+#             frames_per_state=4,
+#         )
 
 class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(
@@ -3088,7 +3098,12 @@ class CarRacingSharedStablebaselines3(CarRacing):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.pilot = DQN.load(pilot)
+        self.pilot = DQN_pilot.load(pilot)
+        # self.pilot = DQN_pilot("CnnPolicy", env=env)
+        # self.pilot.learn(total_timesteps=100, log_interval=4)
+        # self.pilot.save("dqn_car_2")
+        # del self.pilot # remove to demonstrate saving and loading
+        # self.pilot = DQN_pilot.load("dqn_car_2")
         self.RANDOM_ACTION_PROB = random_action_prob
         self.pilot_type = pilot_type
         self.laggy_pilot_freq = laggy_pilot_freq
@@ -3340,7 +3355,8 @@ class CarRacingSharedStablebaselines3(CarRacing):
         elif self.pilot_type == "optimal_pilot":
             # print("optimal_pilot")
             self.pi_action, _ = self.pilot.predict(state)
-
+        # print("Inside Step")
+        # print(self.pi_action)
         pi_action_steering = disc2cont(self.pi_action)[0]
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         self.state[:, :, 4] = pi_frame
