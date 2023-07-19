@@ -5,8 +5,8 @@ from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, Ca
 from haptic.gym import wrappers
 from time import time
 
-pilot_list = ["none", "laggy", "noisy", "optimal"]
-avg_reward_dict = {"none": 0, "laggy": 0, "noisy": 0, "optimal": 0, "solo_pilot":0}
+pilot_list = ["laggy", "noisy", "optimal"]
+avg_reward_dict = { "laggy": 0, "noisy": 0, "optimal": 0, "solo_pilot":0}
 NO_EPISODES = 5
 MAX_EPISODE_TIMESTEPS = 500
 
@@ -30,11 +30,11 @@ if __name__ == "__main__":
         )
         # env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
         # model = DQN_copilot.load("copilot_stablebaselines3")
-        model = DQN_pilot("CnnPolicy", env=env)
-        model.learn(total_timesteps=100, log_interval=4)
-        model.save("dqn_car")
-        del model # remove to demonstrate saving and loading
-        model = DQN_pilot.load("dqn_car")
+        # model = DQN_copilot("CnnPolicy", env=env)
+        # model.learn(total_timesteps=100, log_interval=4)
+        # model.save("dqn_car")
+        # del model # remove to demonstrate saving and loading
+        model = DQN_copilot.load("dqn_car")
         episode_timesteps = 0
         done = False
         episode_reward = 0

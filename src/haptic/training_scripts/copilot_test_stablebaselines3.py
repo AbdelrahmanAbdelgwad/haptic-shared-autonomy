@@ -7,7 +7,7 @@ from time import time
 
 pilot_list = ["none", "laggy", "noisy", "optimal"]
 avg_reward_dict = {"none": 0, "laggy": 0, "noisy": 0, "optimal": 0, "solo_pilot":0}
-NO_EPISODES = 5
+NO_EPISODES = 1
 MAX_EPISODE_TIMESTEPS = 500
 
 if __name__ == "__main__":
@@ -30,7 +30,6 @@ if __name__ == "__main__":
         )
         env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
         model = DQN_copilot.load("copilot_stablebaselines3")
-        # model = DQN_copilot("CnnPolicy", env=env)
         episode_timesteps = 0
         done = False
         episode_reward = 0
