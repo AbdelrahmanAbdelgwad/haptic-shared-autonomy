@@ -28,9 +28,13 @@ if __name__ == "__main__":
             random_action_prob=0.2,
             laggy_pilot_freq=4,
         )
-        env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
-        model = DQN_copilot.load("copilot_stablebaselines3")
-        # model = DQN_copilot("CnnPolicy", env=env)
+        # env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
+        # model = DQN_copilot.load("copilot_stablebaselines3")
+        model = DQN_pilot("CnnPolicy", env=env)
+        model.learn(total_timesteps=100, log_interval=4)
+        model.save("dqn_car")
+        del model # remove to demonstrate saving and loading
+        model = DQN_pilot.load("dqn_car")
         episode_timesteps = 0
         done = False
         episode_reward = 0

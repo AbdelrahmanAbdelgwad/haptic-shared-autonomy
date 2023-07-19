@@ -3075,14 +3075,14 @@ class CarRacingShared(CarRacing):
         return self.state, step_reward, done, {}
 
 
-from stable_baselines3 import DQN
+from stable_baselines3.dqn.dqn import DQN as DQN_pilot
 
 
 class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(self, pilot:str,pilot_type:str,random_action_prob:float,laggy_pilot_freq:int,
     **kwargs):
         super().__init__(**kwargs)
-        self.pilot = DQN.load(pilot)
+        self.pilot = DQN_pilot.load(pilot)
         self.RANDOM_ACTION_PROB = random_action_prob
         self.pilot_type = pilot_type
         self.laggy_pilot_freq = laggy_pilot_freq
