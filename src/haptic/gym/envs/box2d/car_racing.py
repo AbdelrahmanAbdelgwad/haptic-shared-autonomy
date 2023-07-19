@@ -2009,7 +2009,7 @@ class CarRacing(gym.Env, EzPickle):
             # All actions are at 0.6 gas
             # Agent is only required to steer properly
             if action == 0:
-                action = [0, 0.4, 0.1]  # "NOTHING"
+                action = [0, 0.4, 0.05]  # "NOTHING"
             if action == 1:
                 action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
             if action == 2:
@@ -3079,8 +3079,14 @@ from stable_baselines3 import DQN
 
 
 class CarRacingSharedStablebaselines3(CarRacing):
-    def __init__(self, pilot:str,pilot_type:str,random_action_prob:float,laggy_pilot_freq:int,
-    **kwargs):
+    def __init__(
+        self,
+        pilot: str,
+        pilot_type: str,
+        random_action_prob: float,
+        laggy_pilot_freq: int,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.pilot = DQN.load(pilot)
         self.RANDOM_ACTION_PROB = random_action_prob
@@ -3261,7 +3267,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         # there are 20 frames of noise at the begining
         for _ in range(self.frames_per_state + 20):
             obs = self.step(None)[0]
-        
+
         state = obs[:, :, 0:4]
 
         if self.pilot_type == "noisy_pilot":
@@ -3273,7 +3279,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
             # print("laggy_pilot")
             if self.laggy_pilot_counter % self.laggy_pilot_freq == 0:
                 self.pi_action, _ = self.pilot.predict(state)
-            self.laggy_pilot_counter+=1
+            self.laggy_pilot_counter += 1
         elif self.pilot_type == "none_pilot":
             # print("none_pilot")
             self.pi_action = 0
@@ -3327,7 +3333,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
             # print(self.laggy_pilot_counter % self.laggy_pilot_freq == 0)
             if self.laggy_pilot_counter % self.laggy_pilot_freq == 0:
                 self.pi_action, _ = self.pilot.predict(state)
-            self.laggy_pilot_counter+=1
+            self.laggy_pilot_counter += 1
         elif self.pilot_type == "none_pilot":
             # print("none_pilot")
             self.pi_action = 0
