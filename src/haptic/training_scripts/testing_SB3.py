@@ -8,8 +8,8 @@ from time import time
 
 pilot_list = ["none", "laggy", "noisy", "optimal"]
 avg_reward_dict = {"none": 0, "laggy": 0, "noisy": 0, "optimal": 0, "solo_pilot": 0}
-NO_EPISODES = 1
-MAX_EPISODE_TIMESTEPS = 100
+NO_EPISODES = 5
+MAX_EPISODE_TIMESTEPS = 500
 
 if __name__ == "__main__":
     t1 = time()
