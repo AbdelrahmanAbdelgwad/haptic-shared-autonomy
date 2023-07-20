@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from stable_baselines3.dqn import CnnPolicy
 from stable_baselines3.dqn.dqn import DQN as DQN_pilot
 from stable_baselines3.dqn_copilot.dqn import DQN as DQN_copilot
 from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
@@ -30,6 +31,8 @@ if __name__ == "__main__":
         )
         env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
         model = DQN_copilot.load("copilot_stablebaselines3")
+        # model = DQN_copilot(CnnPolicy, env=env, buffer_size=5000)
+        # model = model.load("dqn_car")
         episode_timesteps = 0
         done = False
         episode_reward = 0

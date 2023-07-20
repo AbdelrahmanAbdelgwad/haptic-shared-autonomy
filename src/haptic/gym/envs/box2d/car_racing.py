@@ -3075,18 +3075,7 @@ class CarRacingShared(CarRacing):
         return self.state, step_reward, done, {}
 
 
-from stable_baselines3.dqn.dqn import DQN as DQN_pilot
-# env = CarRacing(
-#             allow_reverse=False,
-#             grayscale=1,
-#             show_info_panel=1,
-#             discretize_actions="smooth_steering",  # n_actions = 11
-#             num_tracks=2,
-#             num_lanes=2,
-#             num_lanes_changes=4,
-#             max_time_out=5,
-#             frames_per_state=4,
-#         )
+from stable_baselines3 import DQN
 
 class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(
@@ -3098,12 +3087,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.pilot = DQN_pilot.load(pilot)
-        # self.pilot = DQN_pilot("CnnPolicy", env=env)
-        # self.pilot.learn(total_timesteps=100, log_interval=4)
-        # self.pilot.save("dqn_car_2")
-        # del self.pilot # remove to demonstrate saving and loading
-        # self.pilot = DQN_pilot.load("dqn_car_2")
+        self.pilot = DQN.load(pilot)
         self.RANDOM_ACTION_PROB = random_action_prob
         self.pilot_type = pilot_type
         self.laggy_pilot_freq = laggy_pilot_freq
