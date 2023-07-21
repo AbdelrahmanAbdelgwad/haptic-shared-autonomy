@@ -46,7 +46,9 @@ if __name__ == "__main__":
             max_time_out=5,
             frames_per_state=4,
         )
-        env = wrappers.Monitor(env, f"./{pilot}_pilot_video/", force=True)
+        env = wrappers.Monitor(
+            env, f"./videos/alpha_1/{pilot}_pilot_video/", force=True
+        )
         model = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
         # model = DQN(CnnPolicy, env=env, buffer_size=5000)
         # model.learn(total_timesteps=100, log_interval=4)
@@ -64,7 +66,7 @@ if __name__ == "__main__":
             while not done:
                 episode_timesteps += 1
                 total_timesteps += 1
-                env.render()
+                # env.render()
                 if pilot == "solo_noisy":
                     action, _ = model.predict(observation)
                     if np.random.random() < RANDOM_ACTION_PROB:
@@ -104,7 +106,9 @@ if __name__ == "__main__":
             random_action_prob=RANDOM_ACTION_PROB,
             laggy_pilot_freq=LAG_FREQ,
         )
-        env = wrappers.Monitor(env, f"./copilot_{pilot}_pilot_video/", force=True)
+        env = wrappers.Monitor(
+            env, f"./videos/alpha_1/copilot_{pilot}_pilot_video/", force=True
+        )
         model = DQNCopilot.load("copilot_stablebaselines3")
         # model = DQNCopilot(CnnPolicyCopilot, env=env, buffer_size=5000)
         # model.learn(total_timesteps=100, log_interval=4)
@@ -121,7 +125,7 @@ if __name__ == "__main__":
             while not done:
                 episode_timesteps += 1
                 total_timesteps += 1
-                env.render()
+                # env.render()
                 action, _ = model.predict(observation)
                 observation, reward, done, info = env.step(action)
                 episode_reward += reward
@@ -153,4 +157,4 @@ if __name__ == "__main__":
     )
     # plt.show()
     # plt.close()
-    plt.savefig("Bar Diagram of Pilots Average Rewards")
+    plt.savefig("Bar Diagram of Pilots Average Rewards Alpha 1")
