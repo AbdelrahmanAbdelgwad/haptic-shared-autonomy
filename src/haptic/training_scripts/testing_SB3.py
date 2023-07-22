@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from stable_baselines3.dqn_copilot import CnnPolicyCopilot
 from stable_baselines3 import DQN
 from stable_baselines3 import DQNCopilot
@@ -7,6 +8,7 @@ from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, Ca
 from haptic.gym import wrappers
 from time import time
 
+ALPHA = 0.5
 RANDOM_ACTION_PROB = 0.2
 LAG_FREQ = 4
 copilot_pilot_list = [
@@ -29,11 +31,12 @@ avg_reward_dict = {
     "solo_noisy": 0,
     "solo_optimal": 0,
 }
-NO_EPISODES = 2
+NO_EPISODES = 5
 MAX_EPISODE_TIMESTEPS = 1000
 
 if __name__ == "__main__":
     t1 = time()
+    result_data = []
     for pilot in pilot_list:
         env = CarRacing(
             allow_reverse=False,
@@ -47,7 +50,7 @@ if __name__ == "__main__":
             frames_per_state=4,
         )
         env = wrappers.Monitor(
-            env, f"./videos/alpha_1/{pilot}_pilot_video/", force=True
+            env, f"./alpha_{ALPHA}/videos/{pilot}_pilot_video/", force=True
         )
         model = DQN.load("trials/models/FINAL_MODEL_SMOOTH_STEERING_CAR")
         # model = DQN(CnnPolicy, env=env, buffer_size=5000)
@@ -66,7 +69,7 @@ if __name__ == "__main__":
             while not done:
                 episode_timesteps += 1
                 total_timesteps += 1
-                # env.render()
+                env.render()
                 if pilot == "solo_noisy":
                     action, _ = model.predict(observation)
                     if np.random.random() < RANDOM_ACTION_PROB:
@@ -88,6 +91,11 @@ if __name__ == "__main__":
             avg_reward += episode_reward
         print(avg_reward)
         avg_reward_dict[pilot] = avg_reward
+        result_data.append({
+            "Pilot": pilot,
+            "Average Reward": avg_reward,
+            "Total Timesteps": total_timesteps,
+        })
         env.close()
 
     for pilot in copilot_pilot_list:
@@ -107,7 +115,7 @@ if __name__ == "__main__":
             laggy_pilot_freq=LAG_FREQ,
         )
         env = wrappers.Monitor(
-            env, f"./videos/alpha_1/copilot_{pilot}_pilot_video/", force=True
+            env, f"./alpha_{ALPHA}/videos/copilot_{pilot}_pilot_video/", force=True
         )
         model = DQNCopilot.load("copilot_stablebaselines3")
         # model = DQNCopilot(CnnPolicyCopilot, env=env, buffer_size=5000)
@@ -125,7 +133,7 @@ if __name__ == "__main__":
             while not done:
                 episode_timesteps += 1
                 total_timesteps += 1
-                # env.render()
+                env.render()
                 action, _ = model.predict(observation)
                 observation, reward, done, info = env.step(action)
                 episode_reward += reward
@@ -137,11 +145,23 @@ if __name__ == "__main__":
                     break
             avg_reward += episode_reward
         avg_reward_dict[f"{pilot}"] = avg_reward
+        result_data.append({
+            "Pilot": pilot,
+            "Average Reward": avg_reward,
+            "Total Timesteps": total_timesteps,
+        })
         env.close()
 
     t2 = time()
     delta_t = (t2 - t1) / 60
     print(f"took {delta_t} minutes")
+
+    # Create a pandas DataFrame
+    df = pd.DataFrame(result_data)
+
+    # Save the DataFrame to a CSV file
+    df.to_csv(f"./alpha_{ALPHA}/results_alpha_{ALPHA}.csv", index=False)
+
     pilots = list(avg_reward_dict.keys())
     rewards = list(avg_reward_dict.values())
 
@@ -157,4 +177,4 @@ if __name__ == "__main__":
     )
     # plt.show()
     # plt.close()
-    plt.savefig("Bar Diagram of Pilots Average Rewards Alpha 1")
+    plt.savefig(f"./alpha_{ALPHA}/Bar Diagram of Pilots Average Rewards Alpha 0_5")
