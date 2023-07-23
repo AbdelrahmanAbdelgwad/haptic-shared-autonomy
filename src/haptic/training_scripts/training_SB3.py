@@ -7,7 +7,7 @@ from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, Ca
 
 RANDOM_ACTION_PROB = 1
 LAG_FREQ = 4
-TOTAL_TIMESTEPS = 4000_000
+TOTAL_TIMESTEPS = 3000_000
 
 if __name__ == "__main__":
     env = CarRacingSharedStablebaselines3(
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         random_action_prob=RANDOM_ACTION_PROB,
         laggy_pilot_freq=LAG_FREQ,
     )
-    model = DQNCopilot(CnnPolicyCopilot, env=env, buffer_size=100000, verbose=1)
+    model = DQNCopilot(CnnPolicyCopilot, env=env, buffer_size=100_000, verbose=1)
     # model = DQNCopilot.load("copilot_stablebaselines3", env =)
     model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=4)
-    model.save("copilot_stablebaselines3")
+    model.save("copilot_trained_on_random_policy")
