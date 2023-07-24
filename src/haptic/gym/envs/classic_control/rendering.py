@@ -54,12 +54,12 @@ def get_display(spec):
 
 
 class Viewer(object):
-    def __init__(self, width, height, display=None):
+    def __init__(self, width, height, caption, display=None):
         display = get_display(display)
 
         self.width = width
         self.height = height
-        self.window = pyglet.window.Window(width=width, height=height, display=display)
+        self.window = pyglet.window.Window(width=width, height=height, caption=caption)
         self.window.on_close = self.window_closed_by_user
         self.isopen = True
         self.geoms = []

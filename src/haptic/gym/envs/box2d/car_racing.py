@@ -527,6 +527,7 @@ class CarRacing(gym.Env, EzPickle):
         auto_render=False,
         allow_outside=True,
         load_tracks_from=None,
+        display=None,
     ):
         self.allow_outside = allow_outside
         self.auto_render = auto_render
@@ -535,7 +536,7 @@ class CarRacing(gym.Env, EzPickle):
         self.random_obstacle_x_position = random_obstacle_x_position
         self.verbose = verbose
         self.animate_zoom = animate_zoom
-
+        self.display = display
         if load_tracks_from is not None:
             if os.path.isdir(load_tracks_from):
                 self.load_tracks_from = load_tracks_from
@@ -2146,7 +2147,7 @@ class CarRacing(gym.Env, EzPickle):
         if self.viewer is None:
             from haptic.gym.envs.classic_control import rendering
 
-            self.viewer = rendering.Viewer(WINDOW_W, WINDOW_H)
+            self.viewer = rendering.Viewer(WINDOW_W, WINDOW_H, caption=self.display)
             self.score_label = pyglet.text.Label(
                 "Score: 0000",
                 font_size=20,
@@ -3076,6 +3077,7 @@ class CarRacingShared(CarRacing):
 
 
 from stable_baselines3 import DQN
+
 
 class CarRacingSharedStablebaselines3(CarRacing):
     def __init__(

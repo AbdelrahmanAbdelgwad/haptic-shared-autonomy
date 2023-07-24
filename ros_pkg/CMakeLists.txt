@@ -162,6 +162,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/ros_interface.py
   scripts/copilot_ros_interface.py
+  scripts/data_collection.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
