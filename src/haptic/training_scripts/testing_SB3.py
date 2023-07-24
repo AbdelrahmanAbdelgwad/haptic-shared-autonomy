@@ -8,7 +8,7 @@ from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, Ca
 from haptic.gym import wrappers
 from time import time
 
-ALPHA = 0.5
+ALPHA = 1
 RANDOM_ACTION_PROB = 0.2
 LAG_FREQ = 4
 copilot_pilot_list = [
@@ -177,4 +177,4 @@ if __name__ == "__main__":
     )
     # plt.show()
     # plt.close()
-    plt.savefig(f"./alpha_{ALPHA}/Bar Diagram of Pilots Average Rewards Alpha 0_5")
+    plt.savefig(f"./alpha_{ALPHA}/Bar Diagram of Pilots Average Rewards Alpha 1")

@@ -115,30 +115,30 @@ SHOW_BETA_PI_ANGLE = 0  # Shows the direction of the beta+pi/2 angle in each til
 FORBID_HARD_TURNS_IN_INTERSECTIONS = False
 
 
-def disc2cont(action):
-    if action == 0:
-        action = [0, 0.4, 0.1]  # "NOTHING"
-    if action == 1:
-        action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
-    if action == 2:
-        action = [-0.4, 0.4, 0.05]  # LEFT_LEVEL_2
-    if action == 3:
-        action = [-0.6, 0.4, 0.05]  # LEFT_LEVEL_3
-    if action == 4:
-        action = [-0.8, 0.4, 0.05]  # LEFT_LEVEL_4
-    if action == 5:
-        action = [-1, 0.4, 0.05]  # LEFT_LEVEL_5
-    if action == 6:
-        action = [0.2, 0.4, 0.05]  # RIGHT_LEVEL_1
-    if action == 7:
-        action = [0.4, 0.4, 0.05]  # RIGHT_LEVEL_2
-    if action == 8:
-        action = [0.6, 0.4, 0.05]  # RIGHT_LEVEL_3
-    if action == 9:
-        action = [0.8, 0.4, 0.05]  # RIGHT_LEVEL_4
-    if action == 10:
-        action = [1, 0.4, 0.05]  # RIGHT_LEVEL_5
-    return action
+# def disc2cont(action):
+#     if action == 0:
+#         action = [0, 0.4, 0.1]  # "NOTHING"
+#     if action == 1:
+#         action = [-0.2, 0.4, 0.05]  # LEFT_LEVEL_1
+#     if action == 2:
+#         action = [-0.4, 0.4, 0.05]  # LEFT_LEVEL_2
+#     if action == 3:
+#         action = [-0.6, 0.4, 0.05]  # LEFT_LEVEL_3
+#     if action == 4:
+#         action = [-0.8, 0.4, 0.05]  # LEFT_LEVEL_4
+#     if action == 5:
+#         action = [-1, 0.4, 0.05]  # LEFT_LEVEL_5
+#     if action == 6:
+#         action = [0.2, 0.4, 0.05]  # RIGHT_LEVEL_1
+#     if action == 7:
+#         action = [0.4, 0.4, 0.05]  # RIGHT_LEVEL_2
+#     if action == 8:
+#         action = [0.6, 0.4, 0.05]  # RIGHT_LEVEL_3
+#     if action == 9:
+#         action = [0.8, 0.4, 0.05]  # RIGHT_LEVEL_4
+#     if action == 10:
+#         action = [1, 0.4, 0.05]  # RIGHT_LEVEL_5
+#     return action
 
 
 def key_press_example(k, mod):
@@ -3287,14 +3287,16 @@ class CarRacingSharedStablebaselines3(CarRacing):
         elif self.pilot_type == "optimal_pilot":
             # print("optimal_pilot")
             self.pi_action, _ = self.pilot.predict(state)
-        pi_action_steering = disc2cont(self.pi_action)[0]
+        pi_action_steering = self._transform_action(self.pi_action)[0]
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         obs[:, :, 4] = pi_frame
         return obs
 
     def step(self, action):
+        # action, _ = self.pilot.predict(self.state[:,:,0:4])
+        # print(action)
         action = self._transform_action(action)
-
+    
         if action is not None:
             self._steps_in_episode += 1
             self.car.steer(-action[0])
@@ -3342,10 +3344,11 @@ class CarRacingSharedStablebaselines3(CarRacing):
             # print("optimal_pilot")
             self.pi_action, _ = self.pilot.predict(state)
         # print("Inside Step")
-        # print(self.pi_action)
-        pi_action_steering = disc2cont(self.pi_action)[0]
+        print("Env",self.pi_action)
+        pi_action_steering = self._transform_action(self.pi_action)[0]
         pi_frame = pi_action_steering * np.ones((STATE_W, STATE_H))
         self.state[:, :, 4] = pi_frame
+        # print("Env",pi_frame[0][0], pi_action_steering)
         return self.state, step_reward, done, {}
 
 
