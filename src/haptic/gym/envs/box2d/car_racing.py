@@ -3362,6 +3362,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         # print("Inside Step")
         print("Env", self.pi_action)
         pi_action_steering = self._transform_action(self.pi_action)[0]
+        print("Env_steer", pi_action_steering)
         # print("Env",pi_frame[0][0], pi_action_steering)
 
         obs = {"frames": state, "human_action": np.array([pi_action_steering])}

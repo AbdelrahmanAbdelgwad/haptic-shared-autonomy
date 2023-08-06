@@ -70,6 +70,7 @@ if __name__ == "__main__":
                     total_timesteps += 1
                     env.render()
                     action, _ = model.predict(observation)
+                    print(action)
                     observation, reward, done, info = env.step(action)
                     episode_reward += reward
                     if done:
