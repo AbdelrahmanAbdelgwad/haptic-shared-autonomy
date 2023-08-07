@@ -1997,10 +1997,10 @@ class CarRacing(gym.Env, EzPickle):
 
     def _update_state(self, new_frame):
         if self.frames_per_state > 1:
-            self.state["frames"][:, :, -1] = new_frame
-            self.state["frames"] = self.state["frames"][:, :, self._update_index]
+            self.state[:, :, -1] = new_frame
+            self.state = self.state[:, :, self._update_index]
         else:
-            self.state["frames"] = new_frame
+            self.state = new_frame
 
     def _transform_action(self, action):
         if self.discretize_actions == "smooth_steering":
@@ -3122,6 +3122,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         allow_outside=True,
         load_tracks_from=None,
         display=None,
+        use_dict_obs_space=False,
     ):
         self.allow_outside = allow_outside
         self.auto_render = auto_render
@@ -3131,6 +3132,7 @@ class CarRacingSharedStablebaselines3(CarRacing):
         self.verbose = verbose
         self.animate_zoom = animate_zoom
         self.display = display
+        self.use_dict_obs_space = use_dict_obs_space
 
         if load_tracks_from is not None:
             if os.path.isdir(load_tracks_from):
@@ -3185,16 +3187,23 @@ class CarRacingSharedStablebaselines3(CarRacing):
 
         # Frames per state
         self.frames_per_state = frames_per_state if frames_per_state > 0 else 1
-        if self.frames_per_state > 1:
-            state_shape.append(self.frames_per_state)
+        if self.use_dict_obs_space:
+            if self.frames_per_state > 1:
+                state_shape.append(self.frames_per_state)
 
-            lst = list(range(self.frames_per_state))
-            self._update_index = [lst[-1]] + lst[:-1]
+                lst = list(range(self.frames_per_state))
+                self._update_index = [lst[-1]] + lst[:-1]
+        else:
+            if self.frames_per_state > 1:
+                state_shape.append(self.frames_per_state)
+
+                lst = list(range(self.frames_per_state + 1))
+                self._update_index = [lst[-1]] + lst[:-1]
 
         self.discretize_actions = (
             discretize_actions
             if discretize_actions in [None, "hard", "soft", "smooth", "smooth_steering"]
-            else "hard"
+            else "smooth_steering"
         )
 
         if max_step_reward < min_step_reward:
@@ -3203,6 +3212,8 @@ class CarRacingSharedStablebaselines3(CarRacing):
         self.min_step_reward = min_step_reward
 
         state_shape = list(state_shape)
+        state_shape[-1] += 1
+
         # Incorporating reverse now the np.array([-1,0,0]) becomes np.array[-1,-1,0]
         if self.discretize_actions == "smooth_steering":
             self.action_space = spaces.Discrete(
@@ -3218,24 +3229,46 @@ class CarRacingSharedStablebaselines3(CarRacing):
             self.action_space = spaces.Box(
                 np.array([-1, min_speed, 0]), np.array([+1, +1, +1]), dtype=np.float32
             )  # steer, gas, brake
-        state_shape[-1] += 1
-        self.observation_space = spaces.Dict(
-            {
-                "frames": spaces.Box(
-                    low=0,
-                    high=255,
-                    shape=(STATE_H, STATE_W, self.frames_per_state),
-                    dtype=np.uint8,
-                ),
-                "human_action": spaces.Box(
-                    low=-1, high=1, shape=(1,), dtype=np.float32
-                ),
-            }
-        )
+
+        if use_dict_obs_space:
+            self.observation_space = spaces.Dict(
+                {
+                    "frames": spaces.Box(
+                        low=0,
+                        high=255,
+                        shape=(STATE_H, STATE_W, self.frames_per_state),
+                        dtype=np.uint8,
+                    ),
+                    "human_action": spaces.Box(
+                        low=-1, high=1, shape=(1,), dtype=np.float32
+                    ),
+                }
+            )
+        else:
+            self.observation_space = spaces.Box(
+                low=0,
+                high=255,
+                shape=(STATE_H, STATE_W, frames_per_state + 1),
+                dtype=np.uint8,
+            )
 
         # Set custom reward function
         self.contactListener_keepref = FrictionDetector(self)
         self.world = Box2D.b2World((0, 0), contactListener=self.contactListener_keepref)
+
+    def _update_state(self, new_frame):
+        if self.use_dict_obs_space:
+            if self.frames_per_state > 1:
+                self.state["frames"][:, :, -1] = new_frame
+                self.state["frames"] = self.state["frames"][:, :, self._update_index]
+            else:
+                self.state["frames"] = new_frame
+        else:
+            if self.frames_per_state > 1:
+                self.state[:, :, -1] = new_frame
+                self.state = self.state[:, :, self._update_index]
+            else:
+                self.state = new_frame
 
     def reset(self):
         """
@@ -3262,10 +3295,14 @@ class CarRacingSharedStablebaselines3(CarRacing):
         self.road = []
         self.track_lanes = None
         self.human_render = False
-        self.state = {
-            "frames": np.zeros((STATE_H, STATE_W, self.frames_per_state)),
-            "human_action": np.zeros((1,)),
-        }
+        if self.use_dict_obs_space:
+            self.state = {
+                "frames": np.zeros((STATE_H, STATE_W, self.frames_per_state)),
+                "human_action": np.zeros((1,)),
+            }
+        else:
+            self.state = np.zeros(self.observation_space.shape)
+
         self._steps_in_episode = 0
 
         while True:
@@ -3284,7 +3321,10 @@ class CarRacingSharedStablebaselines3(CarRacing):
         for _ in range(self.frames_per_state + 20):
             obs = self.step(None)[0]
 
-        state = obs["frames"]
+        if self.use_dict_obs_space:
+            state = obs["frames"]
+        else:
+            state = obs[:, :, 0 : self.frames_per_state]
 
         if self.pilot_type == "noisy_pilot":
             # print("noisy_pilot")
@@ -3304,7 +3344,13 @@ class CarRacingSharedStablebaselines3(CarRacing):
             self.pi_action, _ = self.pilot.predict(state)
         pi_action_steering = self._transform_action(self.pi_action)[0]
 
-        obs = {"frames": state, "human_action": np.array([pi_action_steering])}
+        if self.use_dict_obs_space:
+            obs = {"frames": state, "human_action": np.array([pi_action_steering])}
+        else:
+            pi_action_steering_frame = (
+                np.ones((state.shape[0], state.shape[1])) * pi_action_steering
+            )
+            obs[:, :, -1] = pi_action_steering_frame
 
         return obs
 
@@ -3340,7 +3386,10 @@ class CarRacingSharedStablebaselines3(CarRacing):
         if self.auto_render:
             self.render()
 
-        state = self.state["frames"]
+        if self.use_dict_obs_space:
+            state = self.state["frames"]
+        else:
+            state = self.state[:, :, 0 : self.frames_per_state]
 
         if self.pilot_type == "noisy_pilot":
             # print("noisy_pilot")
@@ -3365,7 +3414,14 @@ class CarRacingSharedStablebaselines3(CarRacing):
         print("Env_steer", pi_action_steering)
         # print("Env",pi_frame[0][0], pi_action_steering)
 
-        obs = {"frames": state, "human_action": np.array([pi_action_steering])}
+        if self.use_dict_obs_space:
+            obs = {"frames": state, "human_action": np.array([pi_action_steering])}
+        else:
+            pi_action_steering_frame = (
+                np.ones((state.shape[0], state.shape[1])) * pi_action_steering
+            )
+            obs = self.state
+            obs[:, :, -1] = pi_action_steering_frame
 
         return obs, step_reward, done, {}
 
