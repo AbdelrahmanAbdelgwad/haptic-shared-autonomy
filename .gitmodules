@@ -1,6 +1,6 @@
 [submodule "gym"]
 	path = gym
-	url = git@github.com:AbdelrahmanAbdelgwad/gym.git
+	url = https://github.com/AbdelrahmanAbdelgwad/gym.git
 [submodule "stable_baselines3"]
 	path = stable_baselines3
-	url = git@github.com:AbdelrahmanAbdelgwad/stable-baselines3.git
+	url = https://github.com/AbdelrahmanAbdelgwad/stable-baselines3.git
