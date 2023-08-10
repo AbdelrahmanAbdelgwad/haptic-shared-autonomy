@@ -17,19 +17,26 @@ jobs:
         with:
           python-version: "3.8"
       
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+              
       - name: Initialize and update submodules
         run: |
           git submodule update --init --recursive
-
+  
       - name: Install submodules
         run: |
-            cd gym  
-            pip install .
-            cd ..
-            cd stable_baselines3
-            pip install .
-            cd ..
-            
+              cd gym  
+              pip install .
+              cd ..
+              cd stable_baselines3
+              pip install .
+              cd ..
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
