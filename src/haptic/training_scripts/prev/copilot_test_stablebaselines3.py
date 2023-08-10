@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 from stable_baselines3.dqn import CnnPolicy
 from stable_baselines3.dqn.dqn import DQN as DQN_pilot
 from stable_baselines3.dqn_copilot.dqn import DQN as DQN_copilot
-from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
-from haptic.gym import wrappers
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
+from gym import wrappers
 from time import time
 
 pilot_list = ["none", "laggy", "noisy", "optimal"]

@@ -1,4 +1,4 @@
-from haptic.gym.envs.box2d.lunar_lander import LunarLanderShared
+from gym.envs.box2d.lunar_lander import LunarLanderShared
 from haptic.learning_algorithm.shared_dqn import Agent
 import numpy as np
 import torch as th

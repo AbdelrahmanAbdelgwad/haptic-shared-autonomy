@@ -4,8 +4,8 @@ import pandas as pd
 from stable_baselines3.dqn_copilot import CnnPolicyCopilot
 from stable_baselines3 import DQN
 from stable_baselines3 import DQNCopilot
-from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
-from haptic.gym import wrappers
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
+from gym import wrappers
 from time import time
 
 import numpy as np

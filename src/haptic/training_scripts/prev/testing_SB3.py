@@ -4,8 +4,8 @@ import pandas as pd
 from stable_baselines3.dqn_copilot import CnnPolicyCopilot
 from stable_baselines3 import DQN
 from stable_baselines3 import DQNCopilot
-from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
-from haptic.gym import wrappers
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3, CarRacing
+from gym import wrappers
 from time import time
 
 ALPHA = 1
@@ -91,11 +91,13 @@ if __name__ == "__main__":
             avg_reward += episode_reward
         print(avg_reward)
         avg_reward_dict[pilot] = avg_reward
-        result_data.append({
-            "Pilot": pilot,
-            "Average Reward": avg_reward,
-            "Total Timesteps": total_timesteps,
-        })
+        result_data.append(
+            {
+                "Pilot": pilot,
+                "Average Reward": avg_reward,
+                "Total Timesteps": total_timesteps,
+            }
+        )
         env.close()
 
     for pilot in copilot_pilot_list:
@@ -145,11 +147,13 @@ if __name__ == "__main__":
                     break
             avg_reward += episode_reward
         avg_reward_dict[f"{pilot}"] = avg_reward
-        result_data.append({
-            "Pilot": pilot,
-            "Average Reward": avg_reward,
-            "Total Timesteps": total_timesteps,
-        })
+        result_data.append(
+            {
+                "Pilot": pilot,
+                "Average Reward": avg_reward,
+                "Total Timesteps": total_timesteps,
+            }
+        )
         env.close()
 
     t2 = time()

@@ -1,6 +1,6 @@
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
 from stable_baselines3.dqn.dqn import DQN
 from stable_baselines3.dqn import CnnPolicy
-from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
 
 env = CarRacingSharedStablebaselines3(
     allow_reverse=False,

@@ -1,4 +1,4 @@
-from haptic.gym.envs.box2d.car_racing import CarRacing
+from gym.envs.box2d.car_racing import CarRacing
 from haptic.learning_algorithm.dqn_cnn import Agent
 import numpy as np
 import torch as th
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         max_mem_size=5000,
         max_q_target_iter=10000,
         observation_space=env.observation_space,
-        cuda_index=1
+        cuda_index=1,
     )
     if LOAD_MODEL:
         model = th.load("trials/models/final_model_custom_DQN_Car_Racer")

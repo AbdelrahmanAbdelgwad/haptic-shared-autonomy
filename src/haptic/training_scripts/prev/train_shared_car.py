@@ -1,4 +1,4 @@
-from haptic.gym.envs.box2d.car_racing import CarRacingShared
+from gym.envs.box2d.car_racing import CarRacingShared
 from haptic.learning_algorithm.shared_dqn_cnn import Agent
 from stable_baselines3 import DQN
 import numpy as np

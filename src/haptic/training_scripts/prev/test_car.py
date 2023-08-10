@@ -1,4 +1,4 @@
-from haptic.gym.envs.box2d.car_racing import CarRacing
+from gym.envs.box2d.car_racing import CarRacing
 from haptic.learning_algorithm.dqn_cnn import Agent
 import numpy as np
 import torch as th
