@@ -1,17 +1,17 @@
 import torch
-import haptic.gym as gym
+import gym
 
 # import gnwrapper
-from haptic.gym import logger as gymlogger
+from gym import logger as gymlogger
 
-from haptic.gym.wrappers import Monitor
+from gym.wrappers import Monitor
 from haptic.utils.parser import *
 
 gymlogger.set_level(30)
 
 from IPython.display import HTML
 from IPython import display as ipythondisplay
-from haptic.gym.envs.box2d.car_racing import CarRacing
+from gym.envs.box2d.car_racing import CarRacing
 import time
 from stable_baselines3 import DQN
 from stable_baselines3.dqn import CnnPolicy

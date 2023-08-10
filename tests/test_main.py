@@ -1,5 +1,5 @@
 from src.haptic.__main__ import add
-from src.haptic.gym.envs.box2d.car_racing import CarRacing
+from gym.envs.box2d.car_racing import CarRacing
 
 # from src.haptic.envs.car_racing import CarRacingDiscrete
 
