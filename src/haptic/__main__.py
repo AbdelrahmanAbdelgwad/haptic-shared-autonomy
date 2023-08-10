@@ -13,7 +13,7 @@ from IPython.display import HTML
 from IPython import display as ipythondisplay
 from gym.envs.box2d.car_racing import CarRacing
 import time
-from stable_baselines3 import DQN
+from stable_baselines3.dqn.dqn import DQN
 from stable_baselines3.dqn import CnnPolicy
 
 
