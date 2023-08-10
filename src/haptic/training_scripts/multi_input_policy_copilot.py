@@ -1,16 +1,13 @@
 import sys
 from time import time
+from gym import wrappers
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
 from stable_baselines3.dqn_copilot.policies import (
     MultiInputPolicyCopilot,
     CnnPolicyCopilot,
 )
 from stable_baselines3.dqn_copilot.dqn import DQNCopilot
-from haptic.gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
-from haptic.gym.envs.box2d.car_racing import (
-    CarRacingSharedStablebaselines3,
-    CarRacing,
-)
-from haptic.gym import wrappers
 
 
 if __name__ == "__main__":
