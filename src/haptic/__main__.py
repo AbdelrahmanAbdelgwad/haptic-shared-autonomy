@@ -1,121 +1,170 @@
-import torch
-import gym
+import sys
+from time import time
+from gym import wrappers
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
+from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
+from stable_baselines3.dqn_copilot.policies import (
+    MultiInputPolicyCopilot,
+    CnnPolicyCopilot,
+)
+from stable_baselines3.dqn_copilot.dqn import DQNCopilot
 
-# import gnwrapper
-from gym import logger as gymlogger
-
-from gym.wrappers import Monitor
-from haptic.utils.parser import *
-
-gymlogger.set_level(30)
-
-from IPython.display import HTML
-from IPython import display as ipythondisplay
-from gym.envs.box2d.car_racing import CarRacing
-import time
-from stable_baselines3.dqn.dqn import DQN
-from stable_baselines3.dqn import CnnPolicy
-
-
-def add(x, y):
-    return x + y
+# Copilot naming convention:
+# copilot_<training_timesteps>_<alpha_used>_<pilot_type>_<random_action_prob>_<laggy_pilot_freq>_<network_type>
 
 
 def main():
-    """Main script implementation"""
-    args = parse_args()
-    agent_config, eval_config = generate_agent_config(
-        args.agent_config_path,
-        args.eval_config_path,
-    )
+    mode = sys.argv[1]
+    policy_type = sys.argv[2]
+    pilot_path = sys.argv[3]
+    pilot_type = sys.argv[4]
+    copilot_path = sys.argv[5]
 
-    if args.render_each > -1:
-        agent_config.set("render", "render_each", value=args.render_each)
+    if mode == "train":
+        if policy_type == "Multi":
+            env = CarRacingSharedStablebaselines3(
+                allow_reverse=False,
+                grayscale=1,
+                show_info_panel=1,
+                discretize_actions="smooth_steering",  # n_actions = 11
+                num_tracks=2,
+                num_lanes=2,
+                num_lanes_changes=4,
+                max_time_out=5,
+                frames_per_state=4,
+                pilot=f"{pilot_path}",
+                pilot_type=f"{pilot_type}",
+                random_action_prob=0.2,
+                laggy_pilot_freq=4,
+                use_dict_obs_space=True,
+            )
 
-    if args.render_each_eval > -1:
-        eval_config.set("render", "render_each", value=args.render_each_eval)
+            model = DQNCopilot(
+                MultiInputPolicyCopilot, env, buffer_size=100_000, verbose=1
+            )
+            model.learn(total_timesteps=1000_000, log_interval=4)
+            model.save(f"{copilot_path}")
 
-    if (args.mode == "test") or (args.mode == "train"):
-        agent_config.set("mode", "mode", value=args.mode)
+        elif policy_type == "Cnn":
+            env = CarRacingSharedStablebaselines3(
+                allow_reverse=False,
+                grayscale=1,
+                show_info_panel=1,
+                discretize_actions="smooth_steering",  # n_actions = 11
+                num_tracks=2,
+                num_lanes=2,
+                num_lanes_changes=4,
+                max_time_out=5,
+                frames_per_state=4,
+                pilot=f"{pilot_path}",
+                pilot_type=f"{pilot_type}",
+                random_action_prob=0.2,
+                laggy_pilot_freq=4,
+                use_dict_obs_space=False,
+            )
 
-    total_timesteps = agent_config.getint("timesteps", "total_timesteps")
-    max_episode_timesteps = agent_config.getint("timesteps", "max_episode_timesteps")
-    model_save_path = agent_config.get("paths", "model_save_path")
+            model = DQNCopilot(CnnPolicyCopilot, env, buffer_size=100_000, verbose=1)
+            model.learn(total_timesteps=1000, log_interval=4)
+            model.save(f"{copilot_path}")
 
-    if agent_config.get("mode", "mode") == "train":
-        # if gpu is to be used
-        # pylint: disable=E1101
-        device = torch.device(args.device)
-        # pylint: enable=E1101
-        print("using", device)
+    elif mode == "test":
+        # pilot_list = ["none", "laggy", "noisy", "optimal"]
+        pilot_list = ["optimal"]
+        NO_EPISODES = 1
+        MAX_EPISODE_TIMESTEPS = 1000
+        if sys.argv[2] == "Multi":
+            t1 = time()
+            for pilot in pilot_list:
+                env = CarRacingSharedStablebaselines3(
+                    allow_reverse=False,
+                    grayscale=1,
+                    show_info_panel=1,
+                    discretize_actions="smooth_steering",  # n_actions = 11
+                    num_tracks=2,
+                    num_lanes=2,
+                    num_lanes_changes=4,
+                    max_time_out=5,
+                    frames_per_state=4,
+                    pilot=f"{pilot_path}",
+                    pilot_type=f"{pilot_type}",
+                    random_action_prob=0.2,
+                    laggy_pilot_freq=4,
+                    use_dict_obs_space=True,
+                )
+                env = wrappers.Monitor(
+                    env, f"./copilot_{pilot}_pilot_video/", force=True
+                )
+                model = DQNCopilot.load(f"{copilot_path}")
+                # model = DQN_copilot(CnnPolicy, env=env, buffer_size=5000)
+                # model = model.load("dqn_car")
+                episode_timesteps = 0
+                done = False
+                episode_reward = 0
+                total_timesteps = 0
+                observation = env.reset()
+                for episode in range(NO_EPISODES):
+                    while not done:
+                        episode_timesteps += 1
+                        total_timesteps += 1
+                        env.render()
+                        action, _ = model.predict(observation)
+                        print(action)
+                        observation, reward, done, info = env.step(action)
+                        episode_reward += reward
+                        if done:
+                            env.reset()
+                            done = False
+                        if episode_timesteps % MAX_EPISODE_TIMESTEPS == 0:
+                            episode_timesteps = 0
+                            break
+                env.close()
 
-        # env = gnwrapper.Animation(CarRacingDiscrete())
-        # env = CarRacingDiscrete()
-        env = CarRacing(
-            allow_reverse=False,
-            grayscale=1,
-            show_info_panel=1,
-            discretize_actions=args.action_disc_level,
-            num_tracks=2,
-            num_lanes=2,
-            num_lanes_changes=4,
-            max_time_out=2,
-            frames_per_state=4,
-        )
-        if args.initial_model != "none":
-            DQNmodel = DQN.load(args.initial_model, env=env)
-        else:
-            DQNmodel = DQN(CnnPolicy, env, verbose=1, buffer_size=10000)
-            print("CONTINUE DQN MODEL TRAINING")
-
-        t1 = time.time()
-        # Train model
-        print(f"\n training will start for {total_timesteps} timesteps \n")
-        DQNmodel.learn(
-            total_timesteps=total_timesteps,
-            log_interval=agent_config.getint("statistics", "log_interval"),
-        )
-        t2 = time.time()
-        dt = t2 - t1
-        # Save model
-        DQNmodel.save(model_save_path)
-        time_in_hours = ((dt / 1000) / 60) / 60
-        print("\n", "training time was", time_in_hours, "\n")
-
-    elif agent_config.get("mode", "mode") == "test":
-        env = CarRacing(
-            allow_reverse=False,
-            grayscale=1,
-            show_info_panel=1,
-            discretize_actions=args.action_disc_level,
-            num_tracks=2,
-            num_lanes=2,
-            num_lanes_changes=4,
-            max_time_out=0,
-            frames_per_state=4,
-        )
-        # Uncomment following line to save video of our Agent interacting in this environment
-        # This can be used for debugging and studying how our agent is performing
-        env = gym.wrappers.Monitor(env, "./video/", force=True)
-        model = DQN.load(args.initial_model, env=env)
-        t = 0
-        done = False
-        episode_reward = 0
-        observation = env.reset()
-        # Notice that episodes here are very small due to the way that the environment is structured
-        for episode in range(round(total_timesteps / max_episode_timesteps)):
-            while not done:
-                t += 1
-                env.render()
-                action, _ = model.predict(observation)
-                observation, reward, done, info = env.step(action)
-                episode_reward += reward
-                if done:
-                    print("Episode finished after {} timesteps".format(t + 1))
-                break
-            print(episode_reward)
-            episode_reward = 0
-        env.close()
+        elif sys.argv[2] == "Cnn":
+            t1 = time()
+            for pilot in pilot_list:
+                env = CarRacingSharedStablebaselines3(
+                    allow_reverse=False,
+                    grayscale=1,
+                    show_info_panel=1,
+                    discretize_actions="smooth_steering",  # n_actions = 11
+                    num_tracks=2,
+                    num_lanes=2,
+                    num_lanes_changes=4,
+                    max_time_out=5,
+                    frames_per_state=4,
+                    pilot=f"{pilot_path}",
+                    pilot_type=f"{pilot_type}",
+                    random_action_prob=0.2,
+                    laggy_pilot_freq=4,
+                    use_dict_obs_space=False,
+                )
+                env = wrappers.Monitor(
+                    env, f"./copilot_{pilot}_pilot_video/", force=True
+                )
+                model = DQNCopilot.load(f"{copilot_path}")
+                # model = DQN_copilot(CnnPolicy, env=env, buffer_size=5000)
+                # model = model.load("dqn_car")
+                episode_timesteps = 0
+                done = False
+                episode_reward = 0
+                total_timesteps = 0
+                observation = env.reset()
+                for episode in range(NO_EPISODES):
+                    while not done:
+                        episode_timesteps += 1
+                        total_timesteps += 1
+                        env.render()
+                        action, _ = model.predict(observation)
+                        print(action)
+                        observation, reward, done, info = env.step(action)
+                        episode_reward += reward
+                        if done:
+                            env.reset()
+                            done = False
+                        if episode_timesteps % MAX_EPISODE_TIMESTEPS == 0:
+                            episode_timesteps = 0
+                            break
+                env.close()
 
 
 if __name__ == "__main__":
