@@ -39,7 +39,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest --cov=haptic
+          pytest tests/ --cov=haptic
           echo "${PIPESTATUS[0]}" |& tee coverage_status.log
           python3 -m coverage report --ignore-errors --show-missing |& tee coverage.log
 
