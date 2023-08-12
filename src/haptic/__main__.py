@@ -63,8 +63,8 @@ def main():
                 use_dict_obs_space=False,
             )
 
-            model = DQNCopilot(CnnPolicyCopilot, env, buffer_size=100_000, verbose=1)
-            model.learn(total_timesteps=1000, log_interval=4)
+            model = DQNCopilot(CnnPolicyCopilot, env, buffer_size=200_000, verbose=1)
+            model.learn(total_timesteps=1000_000, log_interval=4)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
