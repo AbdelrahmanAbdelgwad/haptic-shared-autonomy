@@ -143,6 +143,7 @@ def main():
                     done = False
                     episode_reward = 0
                     total_timesteps = 0
+                    total_reward = 0
                     observation = env.reset()
                     for episode in range(NO_EPISODES):
                         while not done:
