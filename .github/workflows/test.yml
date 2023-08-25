@@ -23,7 +23,6 @@ jobs:
       - name: Initialize and update submodules
         run: |
             git submodule update --init --recursive
-            git submodule update --remote
   
       - name: Install submodules
         run: |
