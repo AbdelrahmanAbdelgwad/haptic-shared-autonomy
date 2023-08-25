@@ -1,3 +1,4 @@
+# TODO: use this script to modify the __main__.py and then throw it away
 import torch
 import gym
 

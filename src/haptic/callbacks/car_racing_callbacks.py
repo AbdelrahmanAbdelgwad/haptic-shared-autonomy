@@ -8,6 +8,7 @@ from IPython import display as ipythondisplay
 MODEL_SAVE_NAME = "callback_model"
 
 
+# TODO: create a custom callback to save model while training based on best reward
 class DQNCustomCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.

@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
+# CNN version of dqn.py
+
 
 class DeepQNetwork(nn.Module):
     def __init__(self, lr, n_actions, observation_space, cuda_index=1):

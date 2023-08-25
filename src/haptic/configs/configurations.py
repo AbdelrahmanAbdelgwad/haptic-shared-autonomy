@@ -1,3 +1,5 @@
+# TODO: create proper configuration convention
+
 """Configurations for training and inference"""
 agent_config_str = """
 [mode]

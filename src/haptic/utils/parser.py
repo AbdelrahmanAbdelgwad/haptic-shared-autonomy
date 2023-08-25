@@ -1,4 +1,5 @@
-"""Parser implementation for HighRL library"""
+# TODO: Implement the parser properly
+"""Parser implementation for haptic library"""
 from typing import Tuple
 from os import path, getcwd
 import os
@@ -72,7 +73,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="smooth_steering",
         dest="action_disc_level",
-        choices=["hard", "soft", "smooth","smooth_steering"],
+        choices=["hard", "soft", "smooth", "smooth_steering"],
         help="What level of action discretization to use (default: %(default)s)",
     )
     parser.add_argument(

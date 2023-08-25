@@ -4,6 +4,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
+# This is an exact replica of the dqn_vanilla but using a target network
+# MLP
+
 
 class DeepQNetwork(nn.Module):
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions, cuda_index=1):

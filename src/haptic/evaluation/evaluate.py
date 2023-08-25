@@ -1,3 +1,5 @@
+# TODO: create proper evaluations
+
 import gym
 from gym import logger as gymlogger
 
