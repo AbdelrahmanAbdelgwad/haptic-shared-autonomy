@@ -3,6 +3,7 @@ from time import time
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import torch as th
 from gym import wrappers
 from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
 from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
@@ -11,6 +12,9 @@ from stable_baselines3.dqn_copilot.policies import (
     CnnPolicyCopilot,
 )
 from stable_baselines3.dqn_copilot.dqn import DQNCopilot
+from stable_baselines3.common.callbacks import CallbackList
+from haptic.callbacks.car_racing_callbacks import SaveBestModelCallback
+from haptic.classic_control.pid_car_racing import pid, find_error
 
 # Copilot naming convention:
 # copilot_<training_timesteps>_<alpha_used>_<pilot_type>_<random_action_prob>_<laggy_pilot_freq>_<network_type>
@@ -23,16 +27,21 @@ DISCRITIZED_ACTIONS = "smooth_steering"  # n_actions = 11
 NUM_TRACKS = 2
 NUM_LANES = 2
 NUM_LANES_CHANGES = 4
-MAX_TIME_OUT = 5
+MAX_TIME_OUT = 2
 FRAMES_PER_STATE = 4
 
 # Pilot Params
 RANDOM_ACTION_PROB = 0.3
-LAGGY_PILOT_FREQ = 4
+LAGGY_PILOT_FREQ = 3
 
 # Testing Params
 NO_EPISODES = 1
-MAX_EPISODE_TIMESTEPS = 500
+MAX_EPISODE_TIMESTEPS = 1000
+
+
+Kp = 0.02
+Ki = 0.03
+Kd = 0.2
 
 
 def main():
@@ -88,22 +97,61 @@ def main():
                 random_action_prob=RANDOM_ACTION_PROB,
                 laggy_pilot_freq=LAGGY_PILOT_FREQ,
                 use_dict_obs_space=False,
+                auto_render=False,
+                scenario="train",
             )
-
+            # trained_model = DQNCopilot.load("copilot_1M_0.6_noisy_0.3_x4_Cnn")
+            # state_dict = trained_model.q_net.state_dict()
+            # model = DQNCopilot(
+            #     CnnPolicyCopilot,
+            #     env,
+            #     learning_rate=0.0001,
+            #     buffer_size=50_000,
+            #     learning_starts=16,
+            #     batch_size=32,
+            #     tau=1.0,
+            #     gamma=0.99,
+            #     train_freq=4,
+            #     gradient_steps=1,
+            #     replay_buffer_class=None,
+            #     replay_buffer_kwargs=None,
+            #     optimize_memory_usage=False,
+            #     target_update_interval=500,
+            #     exploration_fraction=0.2,
+            #     exploration_initial_eps=0.9,
+            #     exploration_final_eps=0.05,
+            #     max_grad_norm=10,
+            #     stats_window_size=100,
+            #     tensorboard_log="localhost",
+            #     policy_kwargs=None,
+            #     verbose=1,
+            #     seed=None,
+            #     device="cuda",
+            #     _init_setup_model=True,
+            # )
+            # model.q_net.load_state_dict(state_dict)
+            # model.q_net_target.load_state_dict(state_dict)
             model = DQNCopilot(
-                CnnPolicyCopilot,
-                env,
-                buffer_size=50_000,
-                verbose=1,
+                CnnPolicyCopilot, env, buffer_size=50_000, verbose=1, device="cuda"
             )
-            model.learn(total_timesteps=1000_000, log_interval=4)
+            save_model_callback = SaveBestModelCallback(
+                eval_env=env,
+                n_eval_episodes=2,
+                logpath="./testing_callbacks/logs/logs.csv",
+                savepath="./testing_callbacks/models/best_model",
+                eval_frequency=500,
+                verbose=1,
+                render=True,
+            )
+            callbacks = CallbackList([save_model_callback])
+            model.learn(total_timesteps=5000, log_interval=4, callback=callbacks)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
         # pilot_types = ["none_pilot", "laggy_pilot", "noisy_pilot", "optimal_pilot"]
-        # alpha_schedule = [0, 0.3, 0.6, 1]
-        pilot_types = ["human_keyboard", "optimal_pilot"]
-        alpha_schedule = [1, 0.6, 0.3, 0]
+        pilot_types = ["human_keyboard", "none_pilot"]
+
+        alpha_schedule = [0.6]
         total_rewards = {}
         episode_rewards = {}
         episode_reward_list = []
@@ -218,6 +266,70 @@ def main():
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
+                            if done:
+                                env.reset()
+                                done = False
+                            if episode_timesteps % MAX_EPISODE_TIMESTEPS == 0:
+                                episode_reward_list.append(episode_reward)
+                                episode_reward = 0
+                                episode_timesteps = 0
+                            if (
+                                total_timesteps % (MAX_EPISODE_TIMESTEPS * NO_EPISODES)
+                                == 0
+                            ):
+                                total_rewards[f"alpha_{alpha}"][
+                                    f"{pilot_type}"
+                                ] = total_reward
+                                episode_rewards[f"alpha_{alpha}"][
+                                    f"{pilot_type}"
+                                ] = np.mean(episode_reward_list)
+                                break
+                    env.close()
+
+        elif sys.argv[2] == "PID":
+            for alpha in alpha_schedule:
+                for pilot_type in pilot_types:
+                    env = CarRacingSharedStablebaselines3(
+                        allow_reverse=False,
+                        grayscale=GRAYSCALE,
+                        show_info_panel=SHOW_INFO_PANEL,
+                        discretize_actions=DISCRITIZED_ACTIONS,
+                        num_tracks=NUM_TRACKS,
+                        num_lanes=NUM_LANES,
+                        num_lanes_changes=NUM_LANES_CHANGES,
+                        max_time_out=MAX_TIME_OUT,
+                        frames_per_state=FRAMES_PER_STATE,
+                        pilot=f"{pilot_path}",
+                        pilot_type=f"{pilot_type}",
+                        random_action_prob=RANDOM_ACTION_PROB,
+                        laggy_pilot_freq=LAGGY_PILOT_FREQ,
+                        use_dict_obs_space=False,
+                        display=f"PID: Kp = {Kp}, Ki = {Ki}, Kd = {Kd}",
+                    )
+                    env = wrappers.Monitor(
+                        env,
+                        f"./videos/PID_Kp={Kp}_Ki={Ki}_Kd={Kd}_video/",
+                        force=True,
+                    )
+                    episode_timesteps = 0
+                    done = False
+                    episode_reward = 0
+                    total_timesteps = 0
+                    total_reward = 0
+                    observation = env.reset()
+                    previous_error = 0
+                    for episode in range(NO_EPISODES):
+                        while not done:
+                            episode_timesteps += 1
+                            total_timesteps += 1
+                            env.render()
+                            error = find_error(observation, previous_error)
+                            steering = pid(error, previous_error, Kp, Ki, Kd)
+                            action = [steering, 0.3, 0.05]
+                            observation, reward, done, info = env.step(action)
+                            episode_reward += reward
+                            total_reward += reward
+                            previous_error = error
                             if done:
                                 env.reset()
                                 done = False

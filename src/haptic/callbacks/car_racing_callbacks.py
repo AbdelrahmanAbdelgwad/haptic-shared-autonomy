@@ -1,101 +1,163 @@
+from typing import Optional
+import time
+import logging
+import numpy as np
+from torch import nn
+import gym
+from pandas import DataFrame, concat
+import simple_colors
 from stable_baselines3.common.callbacks import BaseCallback
-import glob
-import io
-import base64
-from IPython.display import HTML
-from IPython import display as ipythondisplay
-
-MODEL_SAVE_NAME = "callback_model"
+from stable_baselines3.common.vec_env.base_vec_env import VecEnv
 
 
-# TODO: create a custom callback to save model while training based on best reward
-class DQNCustomCallback(BaseCallback):
-    """
-    A custom callback that derives from ``BaseCallback``.
+class SaveBestModelCallback(BaseCallback):
+    """Runs evaluation episodes on the trained model,save the evaluation logs
+    and saves the model if improved in evaluation.
 
-    :param verbose: (int) Verbosity level 0: not output 1: info 2: debug
+    Args:
+        BaseCallback (Class): Base class for callback in stable_baselines3.
     """
 
-    def __init__(self, verbose=0):
-        super(DQNCustomCallback, self).__init__(verbose)
-        # Those variables will be accessible in the callback
-        # (they are defined in the base class)
-        # The RL model
-        # self.model = None  # type: BaseAlgorithm
-        # An alias for self.model.get_env(), the environment used for training
-        # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
-        # Number of time the callback was called
-        # self.n_calls = 0  # type: int
-        # self.num_timesteps = 0  # type: int
-        # local and global variables
-        # self.locals = None  # type: Dict[str, Any]
-        # self.globals = None  # type: Dict[str, Any]
-        # The logger object, used to report things in the terminal
-        # self.logger = None  # stable_baselines3.common.logger
-        # # Sometimes, for event callback, it is useful
-        # # to have access to the parent object
-        # self.parent = None  # type: Optional[BaseCallback]
-        self.episodes = 0
-        self.total_episode_reward = 0
+    def __init__(
+        self,
+        eval_env: gym.Env,
+        n_eval_episodes=5,
+        logpath: Optional[str] = None,
+        savepath: Optional[str] = None,
+        eval_frequency: int = 1000,  # 50_000
+        verbose: int = 1,
+        render=True,
+    ) -> None:
+        super().__init__(verbose)
 
-    def _on_training_start(self) -> None:
-        """
-        This method is called before the first rollout starts.
-        """
-        pass
-
-    def _on_rollout_start(self) -> None:
-        """
-        A rollout is the collection of environment interaction
-        using the current policy.
-        This event is triggered before collecting new samples.
-        """
-        pass
+        self.logpath = logpath
+        self.n_eval_episodes = n_eval_episodes
+        self.eval_frequency = eval_frequency
+        self.last_len_statistics = 0
+        self.best_avg_reward = [-np.inf]
+        self.eval_env = eval_env
+        self.savepath = savepath
+        self.last_eval_time = time.time()
+        self.render = render
 
     def _on_step(self) -> bool:
-        # update commulative reward to log at the end of every episode
-        self.total_episode_reward += self.locals["reward"]
-        # at the end of every episode
-        if self.locals["done"][0]:
-            # if log interval has passed
-            if self.episodes % self.locals["log_interval"] == 0:
-                # Print the last video
-                # Save your model and optimizer
-                self.model.save(MODEL_SAVE_NAME)
-                mp4list = glob.glob("video/*.mp4")
-                print(mp4list)
-                if len(mp4list) > 0:
-                    print(len(mp4list))
-                    mp4 = mp4list[-1]
-                    video = io.open(mp4, "r+b").read()
-                    encoded = base64.b64encode(video)
+        """Runs evaluation episodes on the trained model every eval_frequency timesteps,
+        saves the evaluation logs and saves the model if improved in evaluation.
 
-                    # display gameplay video
-                    ipythondisplay.clear_output(wait=True)
-                    ipythondisplay.display(
-                        HTML(
-                            data="""<video alt="" autoplay 
-                                    loop controls style="height: 400px;">
-                                    <source src="data:video/mp4;base64,{0}" type="video/mp4" />
-                                </video>""".format(
-                                encoded.decode("ascii")
-                            )
-                        )
-                    )
-                    print("Episode:", self.episodes)
-            self.episodes += 1
-            self.total_episode_reward = 0
+        Returns:
+            bool: If the callback returns False, training is aborted early.
+        """
 
+        if self.eval_frequency > 0 and self.n_calls % self.eval_frequency == 0:
+            tic = time.time()
+            eval_logs = run_n_episodes(self.model, self.eval_env, self.n_eval_episodes)
+            toc = time.time()
+            eval_duration = toc - tic
+            last_added_eval_logs = eval_logs[self.last_len_statistics :]
+            new_avg_reward = np.mean(last_added_eval_logs["reward"].values)
+
+            save_logs(eval_logs, self.logpath, self.verbose)
+            if self.verbose:
+                print_statistics_eval(last_added_eval_logs, eval_duration)
+            self.save_model_if_improved(new_avg_reward, self.model, self.savepath)
+
+            self.last_len_statistics = len(eval_logs)
         return True
 
-    def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        pass
+    def save_model_if_improved(
+        self,
+        new_avg_reward: float,
+        model: nn.Module,
+        savepath: Optional[str],
+    ) -> None:
+        """Save the model if the average reward improved in evaluation.
 
-    def _on_training_end(self) -> None:
+        Args:
+            new_avg_reward (float): New average reward in evaluation
+            model (_type_): Trained model instance
+            savepath (str): Path to save the model
         """
-        This event is triggered before exiting the `learn()` method.
-        """
-        pass
+        if new_avg_reward <= self.best_avg_reward[0]:
+            return
+
+        self.best_avg_reward[0] = new_avg_reward
+        if savepath is not None:
+            try:
+                model.save(savepath)
+                stat_message = (
+                    f"Model saved to {savepath} (avg reward: {new_avg_reward})."
+                )
+                print(simple_colors.green(stat_message))
+            except AttributeError:
+                print(simple_colors.red("Could not save"))
+            # else:
+            #     print(simple_colors.red("An error occured while saving the model"))
+        else:
+            print(simple_colors.red("No save path found"))
+
+
+def save_logs(training_logs: DataFrame, logpath: Optional[str], verbose: int) -> None:
+    """Saves the training logs of the robot.
+
+    Args:
+        training_logs (DataFrame): Contains robot training logs.
+        logpath (str): Path to save the logs to it.
+        verbose (int): Flag to print the saving path.
+    """
+    training_logs.to_csv(logpath)
+    if verbose > 1:
+        print(simple_colors.green(f"Training logs saved to {logpath}"))
+
+
+def run_n_episodes(
+    model: nn.Module,
+    env: gym.Env,
+    num_eposides: int,
+) -> DataFrame:
+    """Run n evaluation-episodes on the trained model.
+
+    Args:
+        model (torch.nn.Module): Trained model.
+        env (gym.Env): Evaluation env.
+        num_eposides (int): Number of episodes to evaluate on.
+
+    Returns:
+        DataFrame: Logs for evaluation episodes.
+    """
+    env.statistics["scenario"] = "robot_env_test"
+    for episode in range(num_eposides):
+        obs = env.reset()
+        done = False
+        test_steps = 0
+        while not done:
+            test_steps += 1
+            action, _ = model.predict(obs, deterministic=True)
+            obs, _, done, _ = env.step(action)
+            if test_steps == 0:
+                print(simple_colors.blue(f"test episode {episode}"))
+            if done:
+                print(simple_colors.blue(f"test episode {episode}"))
+        print(simple_colors.blue(env.statistics))
+    return env.statistics
+
+
+def print_statistics_eval(
+    eval_logs: DataFrame,
+    eval_elapsed: float,
+) -> None:
+    """Print statistics of evaluation
+
+    Args:
+        eval_logs (DataFrame): ontains robot evaluation logs.
+        eval_elapsed (float):  time elapsed in evaluation.
+    """
+    scenarios = sorted(list(set(eval_logs["scenario"].values)))
+    rewards = eval_logs["reward"].values
+    print(simple_colors.blue(f"Evaluation time : {round(eval_elapsed, 4)}"))
+    for scenario in scenarios:
+        is_scenario = eval_logs["scenario"].values == scenario
+        scenario_rewards = rewards[is_scenario]
+        avg_scenario_rewards = np.mean(scenario_rewards).item()
+        num_scenarios = len(scenario_rewards)
+        stats = f"{scenario}: {avg_scenario_rewards:.4f} ({num_scenarios})"
+        print(simple_colors.green(stats))
