@@ -100,8 +100,8 @@ def main():
                 auto_render=False,
                 scenario="train",
             )
-            trained_model = DQNCopilot.load("copilot_500K_0.6_none_x0.3_x4_Cnn")
-            state_dict = trained_model.q_net.state_dict()
+            # trained_model = DQNCopilot.load("copilot_500K_0.6_none_x0.3_x4_Cnn")
+            # state_dict = trained_model.q_net.state_dict()
             # model = DQNCopilot(
             #     CnnPolicyCopilot,
             #     env,
@@ -137,20 +137,20 @@ def main():
                 device="cuda",
                 exploration_initial_eps=0.05,
             )
-            model.q_net.load_state_dict(state_dict)
-            model.q_net_target.load_state_dict(state_dict)
+            # model.q_net.load_state_dict(state_dict)
+            # model.q_net_target.load_state_dict(state_dict)
 
             save_model_callback = SaveBestModelCallback(
                 eval_env=env,
                 n_eval_episodes=1,
-                logpath="./testing_callbacks/logs/logs_2.csv",
-                savepath="./testing_callbacks/models/best_model",
+                logpath="./testing_callbacks/logs/logs_anas.csv",
+                savepath="./testing_callbacks/models/best_model_anas",
                 eval_frequency=50_000,
                 verbose=1,
                 render=True,
             )
             callbacks = CallbackList([save_model_callback])
-            model.learn(total_timesteps=500_000, log_interval=20, callback=callbacks)
+            model.learn(total_timesteps=2_000_000, log_interval=20, callback=callbacks)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
