@@ -24,8 +24,8 @@ from haptic.classic_control.pid_car_racing import pid, find_error
 GRAYSCALE = 1
 SHOW_INFO_PANEL = 1
 DISCRITIZED_ACTIONS = "smooth_steering"  # n_actions = 11
-NUM_TRACKS = 2
-NUM_LANES = 2
+NUM_TRACKS = 1
+NUM_LANES = 1
 NUM_LANES_CHANGES = 4
 MAX_TIME_OUT = 2
 FRAMES_PER_STATE = 4
@@ -100,7 +100,7 @@ def main():
                 auto_render=False,
                 scenario="train",
             )
-            # trained_model = DQNCopilot.load("copilot_1M_0.6_noisy_0.3_x4_Cnn")
+            # trained_model = DQNCopilot.load("copilot_500K_0.6_none_x0.3_x4_Cnn")
             # state_dict = trained_model.q_net.state_dict()
             # model = DQNCopilot(
             #     CnnPolicyCopilot,
@@ -129,27 +129,33 @@ def main():
             #     device="cuda",
             #     _init_setup_model=True,
             # )
+            model = DQNCopilot(
+                CnnPolicyCopilot,
+                env,
+                buffer_size=50_000,
+                verbose=1,
+                device="cuda",
+                exploration_initial_eps=0.05,
+            )
             # model.q_net.load_state_dict(state_dict)
             # model.q_net_target.load_state_dict(state_dict)
-            model = DQNCopilot(
-                CnnPolicyCopilot, env, buffer_size=50_000, verbose=1, device="cuda"
-            )
+
             save_model_callback = SaveBestModelCallback(
                 eval_env=env,
-                n_eval_episodes=2,
-                logpath="./testing_callbacks/logs/logs.csv",
-                savepath="./testing_callbacks/models/best_model",
-                eval_frequency=500,
+                n_eval_episodes=1,
+                logpath="./testing_callbacks/logs/logs_anas.csv",
+                savepath="./testing_callbacks/models/best_model_anas",
+                eval_frequency=50_000,
                 verbose=1,
                 render=True,
             )
             callbacks = CallbackList([save_model_callback])
-            model.learn(total_timesteps=5000, log_interval=4, callback=callbacks)
+            model.learn(total_timesteps=2_000_000, log_interval=20, callback=callbacks)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
         # pilot_types = ["none_pilot", "laggy_pilot", "noisy_pilot", "optimal_pilot"]
-        pilot_types = ["human_keyboard", "none_pilot"]
+        pilot_types = ["none_pilot"]
 
         alpha_schedule = [0.6]
         total_rewards = {}
