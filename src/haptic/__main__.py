@@ -76,9 +76,9 @@ def main():
             )
 
             model = DQNCopilot(
-                MultiInputPolicyCopilot, env, buffer_size=100_000, verbose=1
+                MultiInputPolicyCopilot, env, buffer_size=50_000, verbose=1
             )
-            model.learn(total_timesteps=1000_000, log_interval=4)
+            model.learn(total_timesteps=2000_000, log_interval=4)
             model.save(f"{copilot_path}")
 
         elif policy_type == "Cnn":
@@ -142,19 +142,19 @@ def main():
             save_model_callback = SaveBestModelCallback(
                 eval_env=env,
                 n_eval_episodes=1,
-                logpath="./testing_callbacks/logs/logs_anas.csv",
-                savepath="./testing_callbacks/models/best_model_anas",
+                logpath="./testing_callbacks/logs/logs_3.csv",
+                savepath="./testing_callbacks/models/best_model_3",
                 eval_frequency=50_000,
                 verbose=1,
                 render=True,
             )
             callbacks = CallbackList([save_model_callback])
-            model.learn(total_timesteps=2_000_000, log_interval=20, callback=callbacks)
+            model.learn(total_timesteps=1_500_000, log_interval=20, callback=callbacks)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
         # pilot_types = ["none_pilot", "laggy_pilot", "noisy_pilot", "optimal_pilot"]
-        pilot_types = ["none_pilot"]
+        pilot_types = ["human_keyboard", "none_pilot"]
 
         alpha_schedule = [0.6]
         total_rewards = {}
@@ -355,56 +355,55 @@ def main():
                                 break
                     env.close()
 
-            # Create a directory for saving charts if it doesn't exist
-            chart_dir = "./charts"
-            if not os.path.exists(chart_dir):
-                os.makedirs(chart_dir)
+        # Create a directory for saving charts if it doesn't exist
+        chart_dir = "./charts"
+        if not os.path.exists(chart_dir):
+            os.makedirs(chart_dir)
 
-            for alpha in alpha_schedule:
-                total_rewards_alpha = [
-                    total_rewards[f"alpha_{alpha}"][pilot_type]
-                    for pilot_type in pilot_types
-                ]
-                plt.figure()
-                plt.bar(pilot_types, total_rewards_alpha)
-                plt.xlabel("Pilot Type")
-                plt.ylabel("Total Reward")
-                plt.title(f"Total Rewards for Alpha = {alpha}")
-                plt.savefig(f"./charts/total_rewards_alpha_{alpha}.png")
+        for alpha in alpha_schedule:
+            total_rewards_alpha = [
+                total_rewards[f"alpha_{alpha}"][pilot_type]
+                for pilot_type in pilot_types
+            ]
+            plt.figure()
+            plt.bar(pilot_types, total_rewards_alpha)
+            plt.xlabel("Pilot Type")
+            plt.ylabel("Total Reward")
+            plt.title(f"Total Rewards for Alpha = {alpha}")
+            plt.savefig(f"./charts/total_rewards_alpha_{alpha}.png")
 
-                episode_rewards_alpha = [
-                    episode_rewards[f"alpha_{alpha}"][pilot_type]
-                    for pilot_type in pilot_types
-                ]
-                plt.figure()
-                plt.bar(pilot_types, episode_rewards_alpha)
-                plt.xlabel("Pilot Type")
-                plt.ylabel("Episode Reward")
-                plt.title(f"Episode Rewards for Alpha = {alpha}")
-                plt.savefig(f"./charts/episode_rewards_alpha_{alpha}.png")
+            episode_rewards_alpha = [
+                episode_rewards[f"alpha_{alpha}"][pilot_type]
+                for pilot_type in pilot_types
+            ]
+            plt.figure()
+            plt.bar(pilot_types, episode_rewards_alpha)
+            plt.xlabel("Pilot Type")
+            plt.ylabel("Episode Reward")
+            plt.title(f"Episode Rewards for Alpha = {alpha}")
+            plt.savefig(f"./charts/episode_rewards_alpha_{alpha}.png")
 
-            for pilot_type in pilot_types:
-                episode_rewards_pilot = [
-                    episode_rewards[f"alpha_{alpha}"][pilot_type]
-                    for alpha in alpha_schedule
-                ]
-                plt.figure()
-                plt.bar([str(alpha) for alpha in alpha_schedule], episode_rewards_pilot)
-                plt.xlabel("Alpha Value")
-                plt.ylabel("Episode Reward")
-                plt.title(f"Episode Rewards for Pilot Type = {pilot_type}")
-                plt.savefig(f"./charts/episode_rewards_{pilot_type}.png")
+        for pilot_type in pilot_types:
+            episode_rewards_pilot = [
+                episode_rewards[f"alpha_{alpha}"][pilot_type]
+                for alpha in alpha_schedule
+            ]
+            plt.figure()
+            plt.bar([str(alpha) for alpha in alpha_schedule], episode_rewards_pilot)
+            plt.xlabel("Alpha Value")
+            plt.ylabel("Episode Reward")
+            plt.title(f"Episode Rewards for Pilot Type = {pilot_type}")
+            plt.savefig(f"./charts/episode_rewards_{pilot_type}.png")
 
-                total_rewards_pilot = [
-                    total_rewards[f"alpha_{alpha}"][pilot_type]
-                    for alpha in alpha_schedule
-                ]
-                plt.figure()
-                plt.bar([str(alpha) for alpha in alpha_schedule], total_rewards_pilot)
-                plt.xlabel("Alpha Value")
-                plt.ylabel("Total Reward")
-                plt.title(f"Total Rewards for Pilot Type = {pilot_type}")
-                plt.savefig(f"./charts/total_rewards_{pilot_type}.png")
+            total_rewards_pilot = [
+                total_rewards[f"alpha_{alpha}"][pilot_type] for alpha in alpha_schedule
+            ]
+            plt.figure()
+            plt.bar([str(alpha) for alpha in alpha_schedule], total_rewards_pilot)
+            plt.xlabel("Alpha Value")
+            plt.ylabel("Total Reward")
+            plt.title(f"Total Rewards for Pilot Type = {pilot_type}")
+            plt.savefig(f"./charts/total_rewards_{pilot_type}.png")
 
 
 if __name__ == "__main__":
