@@ -135,7 +135,6 @@ def main():
                 buffer_size=50_000,
                 verbose=1,
                 device="cuda",
-                exploration_initial_eps=0.05,
             )
             # model.q_net.load_state_dict(state_dict)
             # model.q_net_target.load_state_dict(state_dict)
