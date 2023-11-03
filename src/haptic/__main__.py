@@ -165,7 +165,7 @@ def main():
             total_rewards[f"alpha_{alpha}"] = {}
         if sys.argv[2] == "Multi":
             for alpha in alpha_schedule:
-                file_path = "/home/anas/shared_autonomy/haptic/src/haptic/alpha.txt"
+                file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in pilot_types:
@@ -229,7 +229,7 @@ def main():
 
         elif sys.argv[2] == "Cnn":
             for alpha in alpha_schedule:
-                file_path = "/home/anas/shared_autonomy/haptic/src/haptic/alpha.txt"
+                file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in pilot_types:
