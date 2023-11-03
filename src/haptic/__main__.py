@@ -78,7 +78,7 @@ def main():
             model = DQNCopilot(
                 MultiInputPolicyCopilot, env, buffer_size=50_000, verbose=1
             )
-            model.learn(total_timesteps=2000_000, log_interval=4)
+            model.learn(total_timesteps=2_000_000, log_interval=4)
             model.save(f"{copilot_path}")
 
         elif policy_type == "Cnn":
@@ -100,8 +100,8 @@ def main():
                 auto_render=False,
                 scenario="train",
             )
-            # trained_model = DQNCopilot.load("copilot_500K_0.6_none_x0.3_x4_Cnn")
-            # state_dict = trained_model.q_net.state_dict()
+            trained_model = DQNCopilot.load("best_model_3.zip")
+            state_dict = trained_model.q_net.state_dict()
             # model = DQNCopilot(
             #     CnnPolicyCopilot,
             #     env,
@@ -136,20 +136,20 @@ def main():
                 verbose=1,
                 device="cuda",
             )
-            # model.q_net.load_state_dict(state_dict)
-            # model.q_net_target.load_state_dict(state_dict)
+            model.q_net.load_state_dict(state_dict)
+            model.q_net_target.load_state_dict(state_dict)
 
             save_model_callback = SaveBestModelCallback(
                 eval_env=env,
                 n_eval_episodes=1,
-                logpath="./testing_callbacks/logs/logs_3.csv",
-                savepath="./testing_callbacks/models/best_model_3",
+                logpath="./testing_callbacks/logs/best_model_noisy.csv",
+                savepath="./testing_callbacks/models/best_model_noisy",
                 eval_frequency=50_000,
                 verbose=1,
                 render=True,
             )
             callbacks = CallbackList([save_model_callback])
-            model.learn(total_timesteps=1_500_000, log_interval=20, callback=callbacks)
+            model.learn(total_timesteps=600_000, log_interval=20, callback=callbacks)
             model.save(f"{copilot_path}")
 
     elif mode == "test":
