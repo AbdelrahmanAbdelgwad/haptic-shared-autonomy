@@ -40,8 +40,32 @@ https://code.visualstudio.com/docs/python/environments
 
 `cd src/haptic`
 
-`haptic test Cnn training_scripts/trials models/FINAL_MODEL_SMOOTH_STEERING_CAR copilot_1M_0.6_noisy_0.3_x4_Cnn`
 
+### Using the package
+#### Training:
+
+In the terminal, run the following command customized to your preference:
+
+`haptic <mode> <policy_type> <path/to/pilot_model> <pilot_type> <copilot_model_name>`
+
+- mode = "train"  
+- policy_type = "Multi" or "Cnn"  
+- pilot_type = "none_pilot","laggy_pilot", "noisy_pilot", "optimal_pilot", or "human_keyboard"
+
+Example:
+
+`haptic train Cnn FINAL_MODEL_SMOOTH_STEERING_CAR none_pilot copilot_2M_0.6_none_x0.3_x4_Cnn`
+
+#### Testing:
+
+`haptic <mode> <policy_type> <path/to/pilot_model> </path/to/copilot_model>`
+
+- mode = "test"
+- policy_type = "Multi" or "Cnn"
+
+Example:
+
+`haptic test Cnn FINAL_MODEL_SMOOTH_STEERING_CAR Copilot_600k_noisy_fine_tuning`
 
 
 <!-- `pip install swig`
