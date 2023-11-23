@@ -14,7 +14,10 @@ from stable_baselines3.dqn_copilot.policies import (
 )
 from stable_baselines3.dqn_copilot.dqn import DQNCopilot
 from stable_baselines3.common.callbacks import CallbackList
-from haptic.callbacks.car_racing_callbacks import SaveBestModelCallback
+from haptic.callbacks.car_racing_callbacks import (
+    SaveBestModelCallback,
+    PeriodicSaveModelCallback,
+)
 from haptic.classic_control.pid_car_racing import pid, find_error
 
 # Env Params
@@ -49,12 +52,13 @@ ALPHA_SCHEDULE = [0.2, 0.6, 1]  # [0.0,..., 0.5,..., 1.0]
 LOAD_MODEL = False  # True if you want to load a model
 MODEL_NAME = ""  # Name of the copilot model to load if the above is True
 
-TIME_STEPS = 1000  # number of timesteps to train for
+TIME_STEPS = 100_000  # number of timesteps to train for
 LOG_INTERVAL = 20  # number of timesteps between each log
 BUFFER_SIZE = 50_000  # size of the replay buffer
 EVAL_FREQ = 500  # number of timesteps between each evaluation
 RENDER_EVAL = False  # True if you want to render the evaluation
 OUTPUT_PATH = "./training_folder"  # path to save the training folder
+MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
 
 
 # PID Params
@@ -147,7 +151,7 @@ def main():
                     device="cuda",
                 )
 
-        save_model_callback = SaveBestModelCallback(
+        save_best_model_callback = SaveBestModelCallback(
             eval_env=env,
             n_eval_episodes=1,
             logpath=f"{train_folder_output_path}/logs",
@@ -156,11 +160,20 @@ def main():
             verbose=1,
             render=RENDER_EVAL,
         )
-        callbacks = CallbackList([save_model_callback])
+        save_model_callback = PeriodicSaveModelCallback(
+            save_frequency=MODEL_SAVE_FREQ,
+            save_path=f"{train_folder_output_path}/models",
+        )
+        callbacks = CallbackList([save_best_model_callback, save_model_callback])
+        comment = input(
+            "If you like to add a comment for the training add it here please: \n"
+        )
+        t1 = time()
         model.learn(
             total_timesteps=TIME_STEPS, log_interval=LOG_INTERVAL, callback=callbacks
         )
         model.save(f"{train_folder_output_path}/{copilot_path}")
+        t2 = time()
 
         # Create a .txt file to save training summary
         summary_file_path = os.path.join(
@@ -198,12 +211,10 @@ def main():
             summary_file.write(f"BUFFER_SIZE: {BUFFER_SIZE}\n")
             summary_file.write(f"EVAL_FREQ: {EVAL_FREQ}\n")
             summary_file.write(f"RENDER_EVAL: {RENDER_EVAL}\n")
-            comment = input(
-                "If you like to add a comment for the training add it here please: \n"
-            )
             summary_file.write(f"Comment from the user: {comment}")
 
         print(f"Training summary saved at {summary_file_path}")
+        print(f"Total time taken: {t2-t1} seconds")
 
     elif mode == "test":
         total_rewards = {}
@@ -456,4 +467,5 @@ def main():
 
 
 if __name__ == "__main__":
+    t1 = time()
     main()

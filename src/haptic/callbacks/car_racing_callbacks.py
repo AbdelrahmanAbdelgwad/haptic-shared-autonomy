@@ -1,6 +1,7 @@
 from typing import Optional
 import time
 import logging
+import os
 import numpy as np
 from torch import nn
 import gym
@@ -161,3 +162,39 @@ def print_statistics_eval(
         num_scenarios = len(scenario_rewards)
         stats = f"{scenario}: {avg_scenario_rewards:.4f} ({num_scenarios})"
         print(simple_colors.green(stats))
+
+
+class PeriodicSaveModelCallback(BaseCallback):
+    """Runs evaluation episodes on the trained model,save the evaluation logs
+    and saves the model if improved in evaluation.
+
+    Args:
+        BaseCallback (Class): Base class for callback in stable_baselines3.
+    """
+
+    def __init__(
+        self,
+        save_path: Optional[str] = None,
+        save_frequency: int = 10_000,  # 50_000
+    ) -> None:
+        super().__init__()
+
+        self.save_frequency = save_frequency
+        self.save_path = save_path
+        # create folder if not exist
+        if not os.path.exists(self.save_path):
+            os.makedirs(self.save_path)
+
+    def _on_step(self) -> bool:
+        """Saves the model every save_frequency timesteps.
+
+        Returns:
+            bool: If the callback returns False, training is aborted early.
+        """
+        if self.save_frequency > 0 and self.n_calls % self.save_frequency == 0:
+            # Join the current save path with the current number of call
+            save_path = os.path.join(self.save_path, f"model_{self.n_calls}")
+            self.model.save(save_path)
+            if self.verbose:
+                print(f"latest model saved to {self.save_path}", simple_colors.green)
+        return True
