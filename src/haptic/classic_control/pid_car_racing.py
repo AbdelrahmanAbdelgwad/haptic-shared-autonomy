@@ -35,6 +35,8 @@ def find_error(observation, previous_error):
     # find all non zero values in the cropped strip.
     # These non zero points(white pixels) corresponds to the edges of the road
     nz = cv2.findNonZero(canny)
+    if nz is None:
+        return previous_error
 
     # horizontal cordinates of center of the road in the cropped slice
     mid = 24
