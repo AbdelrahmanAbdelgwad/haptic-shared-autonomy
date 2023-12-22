@@ -100,7 +100,7 @@ def main():
             pilot_type=f"{pilot_type}",
             random_action_prob=RANDOM_ACTION_PROB,
             laggy_pilot_freq=LAGGY_PILOT_FREQ,
-            use_dict_obs_space=False,
+            obs_space="frames",
             auto_render=False,
             scenario="train",
         )
@@ -243,7 +243,7 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=True,
+                        obs_space="dict",
                         display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
@@ -307,7 +307,7 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=False,
+                        obs_space="frames",
                         display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
@@ -368,7 +368,7 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=False,
+                        obs_space="frames",
                         display=f"PID: Kp = {Kp}, Ki = {Ki}, Kd = {Kd}",
                     )
                     env = wrappers.Monitor(
@@ -390,6 +390,7 @@ def main():
                             env.render()
                             error = find_error(observation, previous_error)
                             steering = pid(error, previous_error, Kp, Ki, Kd)
+                            steering = steering + np.random.normal(0, 0.2)
                             action = [steering, 0.3, 0.05]
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
