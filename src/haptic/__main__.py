@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch as th
 from gym import wrappers
-from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
-from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
+from gym.envs.box2d.car_racing import CarRacingShared
 from stable_baselines3.dqn_copilot.policies import (
     MultiInputPolicyCopilot,
     CnnPolicyCopilot,
@@ -21,7 +20,7 @@ from haptic.callbacks.car_racing_callbacks import (
 from haptic.classic_control.pid_car_racing import pid, find_error
 
 # Env Params
-GRAYSCALE = 1  # 0 for RGB, 1 for Grayscale
+GRAYSCALE = 0  # 0 for RGB, 1 for Grayscale
 SHOW_INFO_PANEL = 1  # 0 for no info panel, 1 for info panel
 DISCRITIZED_ACTIONS = "smooth_steering"  # n_actions = 11
 NUM_TRACKS = 1  # 1 for simple track, 2 for complex track
@@ -40,19 +39,18 @@ LAGGY_PILOT_FREQ = (
 
 # Testing Params
 NO_EPISODES = 1  # number of episodes to test for
-MAX_EPISODE_TIMESTEPS = 1000  # number of timesteps per episode
+MAX_EPISODE_TIMESTEPS = 500  # number of timesteps per episode
 PILOT_TYPES = [
-    "human_keyboard",
-    "none_pilot",
-]  # ["none_pilot","laggy_pilot", "noisy_pilot", "optimal_pilot", "human_keyboard"]
-ALPHA_SCHEDULE = [0.2, 0.6, 1]  # [0.0,..., 0.5,..., 1.0]
+    "PID_pilot",
+]  # ["none_pilot","laggy_pilot", "noisy_pilot", "optimal_pilot", "human_keyboard", "PID_pilot"]
+ALPHA_SCHEDULE = [0.8]  # [0.0,..., 0.5,..., 1.0]
 
 
 # Training Params
 LOAD_MODEL = False  # True if you want to load a model
 MODEL_NAME = ""  # Name of the copilot model to load if the above is True
 
-TIME_STEPS = 100_000  # number of timesteps to train for
+TIME_STEPS = 1000  # number of timesteps to train for
 LOG_INTERVAL = 20  # number of timesteps between each log
 BUFFER_SIZE = 50_000  # size of the replay buffer
 EVAL_FREQ = 500  # number of timesteps between each evaluation
@@ -62,9 +60,9 @@ MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
 
 
 # PID Params
-Kp = 0.02
-Ki = 0.03
-Kd = 0.2
+Kp = 0.03
+Ki = 0.01
+Kd = 0.1
 
 
 def main():
@@ -86,7 +84,7 @@ def main():
         date_str = today.strftime("%b-%d-%Y")
         train_folder_output_path = f"{OUTPUT_PATH}/{date_str}_{time()}"
         os.makedirs(train_folder_output_path)
-        env = CarRacingSharedStablebaselines3(
+        env = CarRacingShared(
             allow_reverse=False,
             grayscale=GRAYSCALE,
             show_info_panel=SHOW_INFO_PANEL,
@@ -229,7 +227,7 @@ def main():
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -293,7 +291,7 @@ def main():
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -353,8 +351,11 @@ def main():
 
         elif sys.argv[2] == "PID":
             for alpha in ALPHA_SCHEDULE:
+                file_path = "./src/haptic/alpha.txt"
+                with open(file_path, "w") as file:
+                    file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -369,33 +370,29 @@ def main():
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
                         obs_space="frames",
-                        display=f"PID: Kp = {Kp}, Ki = {Ki}, Kd = {Kd}",
+                        display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
                         env,
-                        f"./videos/PID_Kp={Kp}_Ki={Ki}_Kd={Kd}_video/",
+                        f"./videos/copilot_alpha_{alpha}_{pilot_type}_video/",
                         force=True,
                     )
+                    model = DQNCopilot.load(f"{copilot_path}")
                     episode_timesteps = 0
                     done = False
                     episode_reward = 0
                     total_timesteps = 0
                     total_reward = 0
                     observation = env.reset()
-                    previous_error = 0
                     for episode in range(NO_EPISODES):
                         while not done:
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            error = find_error(observation, previous_error)
-                            steering = pid(error, previous_error, Kp, Ki, Kd)
-                            steering = steering + np.random.normal(0, 0.2)
-                            action = [steering, 0.3, 0.05]
+                            action, _ = model.predict(observation)
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
-                            previous_error = error
                             if done:
                                 env.reset()
                                 done = False
@@ -415,6 +412,69 @@ def main():
                                 ] = np.mean(episode_reward_list)
                                 break
                     env.close()
+            # for alpha in ALPHA_SCHEDULE:
+            #     for pilot_type in PILOT_TYPES:
+            #         env = CarRacingShared(
+            #             allow_reverse=False,
+            #             grayscale=GRAYSCALE,
+            #             show_info_panel=SHOW_INFO_PANEL,
+            #             discretize_actions=DISCRITIZED_ACTIONS,
+            #             num_tracks=NUM_TRACKS,
+            #             num_lanes=NUM_LANES,
+            #             num_lanes_changes=NUM_LANES_CHANGES,
+            #             max_time_out=MAX_TIME_OUT,
+            #             frames_per_state=FRAMES_PER_STATE,
+            #             pilot=f"{pilot_path}",
+            #             pilot_type=f"{pilot_type}",
+            #             random_action_prob=RANDOM_ACTION_PROB,
+            #             laggy_pilot_freq=LAGGY_PILOT_FREQ,
+            #             obs_space="frames",
+            #             display=f"PID: Kp = {Kp}, Ki = {Ki}, Kd = {Kd}",
+            #         )
+            #         env = wrappers.Monitor(
+            #             env,
+            #             f"./videos/PID_Kp={Kp}_Ki={Ki}_Kd={Kd}_video/",
+            #             force=True,
+            #         )
+            #         episode_timesteps = 0
+            #         done = False
+            #         episode_reward = 0
+            #         total_timesteps = 0
+            #         total_reward = 0
+            #         observation = env.reset()
+            #         previous_error = 0
+            #         for episode in range(NO_EPISODES):
+            #             while not done:
+            #                 episode_timesteps += 1
+            #                 total_timesteps += 1
+            #                 env.render()
+            #                 error = find_error(observation, previous_error)
+            #                 steering = pid(error, previous_error, Kp, Ki, Kd)
+            #                 steering = steering
+            #                 action = [steering, 0.3, 0.05]
+            #                 observation, reward, done, info = env.step(action)
+            #                 episode_reward += reward
+            #                 total_reward += reward
+            #                 previous_error = error
+            #                 if done:
+            #                     env.reset()
+            #                     done = False
+            #                 if episode_timesteps % MAX_EPISODE_TIMESTEPS == 0:
+            #                     episode_reward_list.append(episode_reward)
+            #                     episode_reward = 0
+            #                     episode_timesteps = 0
+            #                 if (
+            #                     total_timesteps % (MAX_EPISODE_TIMESTEPS * NO_EPISODES)
+            #                     == 0
+            #                 ):
+            #                     total_rewards[f"alpha_{alpha}"][
+            #                         f"{pilot_type}"
+            #                     ] = total_reward
+            #                     episode_rewards[f"alpha_{alpha}"][
+            #                         f"{pilot_type}"
+            #                     ] = np.mean(episode_reward_list)
+            #                     break
+            #         env.close()
 
         # Create a directory for saving charts if it doesn't exist
         chart_dir = "./charts"
