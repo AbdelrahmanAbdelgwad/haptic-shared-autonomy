@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch as th
 from gym import wrappers
-from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
-from gym.envs.box2d.car_racing import CarRacingSharedStablebaselines3
+from gym.envs.box2d.car_racing import CarRacingShared
 from stable_baselines3.dqn_copilot.policies import (
     MultiInputPolicyCopilot,
     CnnPolicyCopilot,
+    MlpPolicyCopilot,
 )
 from stable_baselines3.dqn_copilot.dqn import DQNCopilot
 from stable_baselines3.common.callbacks import CallbackList
@@ -29,7 +29,7 @@ NUM_LANES = 1  # 1 for no lane changes, 2 for lane changes
 NUM_LANES_CHANGES = 4  # DO NOT CHANGE
 MAX_TIME_OUT = 2  # number of seconds out of track before episode ends
 FRAMES_PER_STATE = 4  # number of frames to stack for each state
-
+OBS_SPACE = "vector"  # "frames" or "dict" or "vector"
 # Pilot Params
 RANDOM_ACTION_PROB = (
     0.3  # probability of taking a random action if the pilot type is noisy
@@ -40,19 +40,18 @@ LAGGY_PILOT_FREQ = (
 
 # Testing Params
 NO_EPISODES = 1  # number of episodes to test for
-MAX_EPISODE_TIMESTEPS = 1000  # number of timesteps per episode
+MAX_EPISODE_TIMESTEPS = 500  # number of timesteps per episode
 PILOT_TYPES = [
-    "human_keyboard",
-    "none_pilot",
-]  # ["none_pilot","laggy_pilot", "noisy_pilot", "optimal_pilot", "human_keyboard"]
-ALPHA_SCHEDULE = [0.2, 0.6, 1]  # [0.0,..., 0.5,..., 1.0]
+    "PID_pilot",
+]  # ["none_pilot","laggy_pilot", "noisy_pilot", "optimal_pilot", "human_keyboard", "PID_pilot"]
+ALPHA_SCHEDULE = [1]  # [0.0,..., 0.5,..., 1.0]
 
 
 # Training Params
 LOAD_MODEL = False  # True if you want to load a model
 MODEL_NAME = ""  # Name of the copilot model to load if the above is True
 
-TIME_STEPS = 100_000  # number of timesteps to train for
+TIME_STEPS = 1000  # number of timesteps to train for
 LOG_INTERVAL = 20  # number of timesteps between each log
 BUFFER_SIZE = 50_000  # size of the replay buffer
 EVAL_FREQ = 500  # number of timesteps between each evaluation
@@ -62,9 +61,9 @@ MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
 
 
 # PID Params
-Kp = 0.02
-Ki = 0.03
-Kd = 0.2
+Kp = 0.03
+Ki = 0.01
+Kd = 0.1
 
 
 def main():
@@ -86,7 +85,7 @@ def main():
         date_str = today.strftime("%b-%d-%Y")
         train_folder_output_path = f"{OUTPUT_PATH}/{date_str}_{time()}"
         os.makedirs(train_folder_output_path)
-        env = CarRacingSharedStablebaselines3(
+        env = CarRacingShared(
             allow_reverse=False,
             grayscale=GRAYSCALE,
             show_info_panel=SHOW_INFO_PANEL,
@@ -100,7 +99,7 @@ def main():
             pilot_type=f"{pilot_type}",
             random_action_prob=RANDOM_ACTION_PROB,
             laggy_pilot_freq=LAGGY_PILOT_FREQ,
-            use_dict_obs_space=False,
+            obs_space=OBS_SPACE,
             auto_render=False,
             scenario="train",
         )
@@ -122,14 +121,14 @@ def main():
                 model.q_net_target.load_state_dict(state_dict)
             else:
                 model = DQNCopilot(
-                    CnnPolicyCopilot,
+                    MultiInputPolicyCopilot,
                     env,
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
                 )
 
-        elif policy_type == "Cnn":
+        elif policy_type == "CNN":
             if LOAD_MODEL:
                 trained_model = DQNCopilot.load(MODEL_NAME)
                 state_dict = trained_model.q_net.state_dict()
@@ -143,8 +142,32 @@ def main():
                 model.q_net.load_state_dict(state_dict)
                 model.q_net_target.load_state_dict(state_dict)
             else:
+                print(f"\n\n {env.observation_space} \n\n")
                 model = DQNCopilot(
                     CnnPolicyCopilot,
+                    env,
+                    buffer_size=BUFFER_SIZE,
+                    verbose=1,
+                    device="cuda",
+                )
+
+        elif policy_type == "Mlp":
+            if LOAD_MODEL:
+                trained_model = DQNCopilot.load(MODEL_NAME)
+                state_dict = trained_model.q_net.state_dict()
+                model = DQNCopilot(
+                    MlpPolicyCopilot,
+                    env,
+                    buffer_size=BUFFER_SIZE,
+                    verbose=1,
+                    device="cuda",
+                )
+                model.q_net.load_state_dict(state_dict)
+                model.q_net_target.load_state_dict(state_dict)
+            else:
+                print(f"\n\n {env.observation_space} \n\n")
+                model = DQNCopilot(
+                    MlpPolicyCopilot,
                     env,
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
@@ -229,7 +252,7 @@ def main():
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -243,7 +266,7 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=True,
+                        obs_space="dict",
                         display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
@@ -287,13 +310,13 @@ def main():
                                 break
                     env.close()
 
-        elif sys.argv[2] == "Cnn":
+        elif sys.argv[2] == "CNN":
             for alpha in ALPHA_SCHEDULE:
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -307,7 +330,7 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=False,
+                        obs_space=OBS_SPACE,
                         display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
@@ -351,10 +374,13 @@ def main():
                                 break
                     env.close()
 
-        elif sys.argv[2] == "PID":
+        elif sys.argv[2] == "Mlp":
             for alpha in ALPHA_SCHEDULE:
+                file_path = "./src/haptic/alpha.txt"
+                with open(file_path, "w") as file:
+                    file.write(str(alpha))
                 for pilot_type in PILOT_TYPES:
-                    env = CarRacingSharedStablebaselines3(
+                    env = CarRacingShared(
                         allow_reverse=False,
                         grayscale=GRAYSCALE,
                         show_info_panel=SHOW_INFO_PANEL,
@@ -368,33 +394,30 @@ def main():
                         pilot_type=f"{pilot_type}",
                         random_action_prob=RANDOM_ACTION_PROB,
                         laggy_pilot_freq=LAGGY_PILOT_FREQ,
-                        use_dict_obs_space=False,
-                        display=f"PID: Kp = {Kp}, Ki = {Ki}, Kd = {Kd}",
+                        obs_space=OBS_SPACE,
+                        display=f"copilot_alpha_{alpha}_{pilot_type}",
                     )
                     env = wrappers.Monitor(
                         env,
-                        f"./videos/PID_Kp={Kp}_Ki={Ki}_Kd={Kd}_video/",
+                        f"./videos/copilot_alpha_{alpha}_{pilot_type}_video/",
                         force=True,
                     )
+                    model = DQNCopilot.load(f"{copilot_path}")
                     episode_timesteps = 0
                     done = False
                     episode_reward = 0
                     total_timesteps = 0
                     total_reward = 0
                     observation = env.reset()
-                    previous_error = 0
                     for episode in range(NO_EPISODES):
                         while not done:
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            error = find_error(observation, previous_error)
-                            steering = pid(error, previous_error, Kp, Ki, Kd)
-                            action = [steering, 0.3, 0.05]
+                            action, _ = model.predict(observation)
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
-                            previous_error = error
                             if done:
                                 env.reset()
                                 done = False
