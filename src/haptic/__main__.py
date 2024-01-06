@@ -190,6 +190,29 @@ def main():
                     device="cuda",
                 )
 
+        elif policy_type == "Mlp":
+            if LOAD_MODEL:
+                trained_model = DQNCopilot.load(MODEL_NAME)
+                state_dict = trained_model.q_net.state_dict()
+                model = DQNCopilot(
+                    MlpPolicyCopilot,
+                    env,
+                    buffer_size=BUFFER_SIZE,
+                    verbose=1,
+                    device="cuda",
+                )
+                model.q_net.load_state_dict(state_dict)
+                model.q_net_target.load_state_dict(state_dict)
+            else:
+                print(f"\n\n {env.observation_space} \n\n")
+                model = DQNCopilot(
+                    MlpPolicyCopilot,
+                    env,
+                    buffer_size=BUFFER_SIZE,
+                    verbose=1,
+                    device="cuda",
+                )
+
         save_best_model_callback = SaveBestModelCallback(
             eval_env=env,
             n_eval_episodes=1,
