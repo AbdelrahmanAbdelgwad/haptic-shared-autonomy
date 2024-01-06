@@ -23,13 +23,14 @@ from haptic.classic_control.pid_car_racing import pid, find_error
 # Env Params
 GRAYSCALE = 1  # 0 for RGB, 1 for Grayscale
 SHOW_INFO_PANEL = 1  # 0 for no info panel, 1 for info panel
-DISCRITIZED_ACTIONS = "smooth_steering"  # n_actions = 11
+DISCRITIZED_ACTIONS = "f_smooth_steering"  # n_actions = 11
 NUM_TRACKS = 1  # 1 for simple track, 2 for complex track
 NUM_LANES = 1  # 1 for no lane changes, 2 for lane changes
 NUM_LANES_CHANGES = 4  # DO NOT CHANGE
 MAX_TIME_OUT = 2  # number of seconds out of track before episode ends
 FRAMES_PER_STATE = 4  # number of frames to stack for each state
 OBS_SPACE = "vector"  # "frames" or "dict" or "vector"
+ALPHA = 0.6
 # Pilot Params
 RANDOM_ACTION_PROB = (
     0.3  # probability of taking a random action if the pilot type is noisy
@@ -81,6 +82,11 @@ def main():
 
     # main code
     if mode == "train":
+        file_path = "./src/haptic/alpha.txt"
+        with open(file_path, "w") as file:
+            file.write(str(ALPHA))
+            file.write("\n")
+            file.write(str(OBS_SPACE))
         today = date.today()
         date_str = today.strftime("%b-%d-%Y")
         train_folder_output_path = f"{OUTPUT_PATH}/{date_str}_{time()}"
@@ -260,7 +266,9 @@ def main():
             for alpha in ALPHA_SCHEDULE:
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
-                    file.write(str(alpha))
+                    file.write(str(ALPHA))
+                    file.write("\n")
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
@@ -324,7 +332,9 @@ def main():
             for alpha in ALPHA_SCHEDULE:
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
-                    file.write(str(alpha))
+                    file.write(str(ALPHA))
+                    file.write("\n")
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
@@ -388,7 +398,9 @@ def main():
             for alpha in ALPHA_SCHEDULE:
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
-                    file.write(str(alpha))
+                    file.write(str(ALPHA))
+                    file.write("\n")
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
