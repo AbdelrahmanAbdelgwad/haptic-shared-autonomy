@@ -20,7 +20,7 @@ https://code.visualstudio.com/docs/python/environments
 
 `pip install -r requirements.txt` 
 
-`pip install e .`
+`pip install -e .`
 
 `git submodule update --init --recursive`
 
@@ -28,13 +28,13 @@ https://code.visualstudio.com/docs/python/environments
 
 `cd stable_baselines3`
 
-`pip install e .`
+`pip install -e .`
 
 `cd ..`
 
 `cd gym`
 
-`pip install e .`
+`pip install -e .`
 
 `cd ..`
 
