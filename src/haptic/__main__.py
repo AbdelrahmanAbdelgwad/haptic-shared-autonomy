@@ -49,16 +49,16 @@ ALPHA_SCHEDULE = [0.2, 0.6, 1]  # [0.0,..., 0.5,..., 1.0]
 
 
 # Training Params
-LOAD_MODEL = False  # True if you want to load a model
-MODEL_NAME = ""  # Name of the copilot model to load if the above is True
+LOAD_MODEL = True  # True if you want to load a model
+MODEL_NAME = "/home/mtr-pbl/haptic/haptic-shared-autonomy/best_model.zip"  # Name of the copilot model to load if the above is True
 
-TIME_STEPS = 100_000  # number of timesteps to train for
+TIME_STEPS = 800_000  # number of timesteps to train for
 LOG_INTERVAL = 20  # number of timesteps between each log
-BUFFER_SIZE = 50_000  # size of the replay buffer
+BUFFER_SIZE = 60_000  # size of the replay buffer
 EVAL_FREQ = 500  # number of timesteps between each evaluation
 RENDER_EVAL = False  # True if you want to render the evaluation
 OUTPUT_PATH = "./training_folder"  # path to save the training folder
-MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
+MODEL_SAVE_FREQ = 30_000  # number of timesteps between each model save
 
 
 # PID Params
@@ -139,6 +139,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = 0.00001,
+                    exploration_fraction = 0.35,
+                    exploration_initial_eps=0.05,
+                    exploration_final_eps = 0.01,
+                    tensorboard_log="./DQN_Copilot_tensorboard_trial/"
                 )
                 model.q_net.load_state_dict(state_dict)
                 model.q_net_target.load_state_dict(state_dict)
@@ -149,6 +154,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    elearning_rate = 0.00001,
+                    exploration_fraction = 0.35,
+                    exploration_initial_eps=0.05,
+                    exploration_final_eps = 0.01,
+                    tensorboard_log="./DQN_Copilot_tensorboard_trial/"
                 )
 
         save_best_model_callback = SaveBestModelCallback(
@@ -263,7 +273,7 @@ def main():
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            action, _ = model.predict(observation)
+                            action, _ = model.predict(observation,device='cuda:1')
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
@@ -327,7 +337,7 @@ def main():
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            action, _ = model.predict(observation)
+                            action, _ = model.predict(observation,device='cuda:1')
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
