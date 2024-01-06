@@ -251,6 +251,7 @@ def main():
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
@@ -315,6 +316,7 @@ def main():
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
@@ -379,6 +381,7 @@ def main():
                 file_path = "./src/haptic/alpha.txt"
                 with open(file_path, "w") as file:
                     file.write(str(alpha))
+                    file.write(str(OBS_SPACE))
                 for pilot_type in PILOT_TYPES:
                     env = CarRacingShared(
                         allow_reverse=False,
