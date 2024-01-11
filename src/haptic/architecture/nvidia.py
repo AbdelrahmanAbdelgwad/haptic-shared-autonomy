@@ -4,6 +4,10 @@ CNN model architecture.
 taken from: Zhenye Na - https://github.com/Zhenye-Na
 reference: "End to End Learning for Self-Driving Cars", arXiv:1604.07316
 """
+from time import time
+from datetime import date
+import os
+
 import gym
 from gym.envs.box2d.car_racing import CarRacing
 
@@ -11,8 +15,14 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 
+from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.ddpg.ddpg import DDPG
+
+from haptic.callbacks.car_racing_callbacks import (
+    SaveBestModelCallback,
+    PeriodicSaveModelCallback,
+)
 
 
 class NetworkNvidia(nn.Module):
@@ -105,7 +115,18 @@ if __name__ == "__main__":
     MAX_TIME_OUT = 2  # number of seconds out of track before episode ends
     FRAMES_PER_STATE = 4  # number of frames to stack for each state
     NVIDIA = True  # True for NVIDIA model, False for normal model with 96,96,3 input
-    BUFFER_SIZE = 50_000
+    BUFFER_SIZE = 60_000
+    TOTAL_TIMESTEPS = 500_000
+
+    EVAL_FREQ = 50_000  # number of timesteps between each evaluation
+    RENDER_EVAL = False  # True if you want to render the evaluation
+    OUTPUT_PATH = "./training_folder"  # path to save the training folder
+    MODEL_SAVE_FREQ = 50_000  # number of timesteps between each model save
+
+    today = date.today()
+    date_str = today.strftime("%b-%d-%Y")
+    train_folder_output_path = f"{OUTPUT_PATH}/{date_str}_{time()}"
+    os.makedirs(train_folder_output_path)
 
     env = CarRacing(
         allow_reverse=False,
@@ -121,10 +142,10 @@ if __name__ == "__main__":
     )
 
     # Custom actor architecture with two layers of 50 and 10 units respectively
-    # Custom critic architecture with two layers of 50 and 10 units respectively
+    # Custom critic architecture with two layers of 50, 100, 50, and 10 units respectively
     policy_kwargs = dict(
         features_extractor_class=CustomCNN,
-        net_arch=dict(pi=[50, 10], qf=[50, 10]),
+        net_arch=dict(pi=[50, 10], qf=[50, 100, 50, 10]),
     )
 
     # Create the agent
@@ -135,5 +156,24 @@ if __name__ == "__main__":
         verbose=1,
         buffer_size=BUFFER_SIZE,
     )
-    model.learn(200_000)
+
+    save_best_model_callback = SaveBestModelCallback(
+        eval_env=env,
+        n_eval_episodes=1,
+        logpath=f"{train_folder_output_path}/logs",
+        savepath=f"{train_folder_output_path}/best_model",
+        eval_frequency=EVAL_FREQ,
+        verbose=1,
+        render=RENDER_EVAL,
+    )
+    save_model_callback = PeriodicSaveModelCallback(
+        save_frequency=MODEL_SAVE_FREQ,
+        save_path=f"{train_folder_output_path}/models",
+    )
+    callbacks = CallbackList([save_best_model_callback, save_model_callback])
+    comment = input(
+        "If you like to add a comment for the training add it here please: \n"
+    )
+    model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
+
     model.save("ddpg_car_racing")
