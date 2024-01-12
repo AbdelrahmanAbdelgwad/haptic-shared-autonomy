@@ -172,7 +172,7 @@ if __name__ == "__main__":
         buffer_size=BUFFER_SIZE,
         batch_size=64,
         gamma=0.9,
-        action_noise=None,
+        action_noise=action_noise,
         device="cuda",
     )
 
