@@ -7,6 +7,8 @@ reference: "End to End Learning for Self-Driving Cars", arXiv:1604.07316
 from time import time
 from datetime import date
 import os
+import numpy as np
+import cv2
 
 import gym
 from gym.envs.box2d.car_racing import CarRacing
@@ -14,7 +16,7 @@ from gym.envs.box2d.car_racing import CarRacing
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-
+from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.ddpg.ddpg import DDPG
@@ -118,10 +120,10 @@ if __name__ == "__main__":
     BUFFER_SIZE = 60_000
     TOTAL_TIMESTEPS = 500_000
 
-    EVAL_FREQ = 50_000  # number of timesteps between each evaluation
+    EVAL_FREQ = 100_000  # number of timesteps between each evaluation
     RENDER_EVAL = False  # True if you want to render the evaluation
     OUTPUT_PATH = "./training_folder"  # path to save the training folder
-    MODEL_SAVE_FREQ = 50_000  # number of timesteps between each model save
+    MODEL_SAVE_FREQ = 100_000  # number of timesteps between each model save
 
     today = date.today()
     date_str = today.strftime("%b-%d-%Y")
@@ -145,16 +147,33 @@ if __name__ == "__main__":
     # Custom critic architecture with two layers of 50, 100, 50, and 10 units respectively
     policy_kwargs = dict(
         features_extractor_class=CustomCNN,
-        net_arch=dict(pi=[50, 10], qf=[50, 100, 50, 10]),
+        net_arch=dict(pi=[50, 10], qf=[50, 10]),
     )
 
+    action_noise = OrnsteinUhlenbeckActionNoise(
+        mean=0,
+        sigma=0.4,
+        theta=0.6,
+        dt=1e-2,
+        initial_noise=None,
+        dtype=np.float32,
+    )
     # Create the agent
+    # TODO: Reward shaping as they did and max episode steps as well
+    # TODO: Search how to provide different activation functions for different layers in Actor and Critic
+    # TODO: Implement gradient clipping if needed
+    # TODO: Make sure that the observation is normalized
+
     model = DDPG(
         "MlpPolicy",
         env,
         policy_kwargs=policy_kwargs,
         verbose=1,
         buffer_size=BUFFER_SIZE,
+        batch_size=64,
+        gamma=0.9,
+        action_noise=None,
+        device="cuda",
     )
 
     save_best_model_callback = SaveBestModelCallback(
