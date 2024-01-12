@@ -151,9 +151,9 @@ if __name__ == "__main__":
     )
 
     action_noise = OrnsteinUhlenbeckActionNoise(
-        mean=0,
-        sigma=0.4,
-        theta=0.6,
+        mean=np.array([0]),
+        sigma=np.array([0.4]),
+        theta=np.array([0.6]),
         dt=1e-2,
         initial_noise=None,
         dtype=np.float32,
