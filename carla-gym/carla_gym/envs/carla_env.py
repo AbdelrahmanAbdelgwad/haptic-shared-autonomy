@@ -29,11 +29,10 @@ class CarlaEnv(Env):
     def __init__(self, params):
         # Parameters
         self.max_time_episode = params['max_time_episode']
-        self.obs_range = params['obs_range']
-        self.lidar_bin = params['lidar_bin']
         self.min_speed = params['min_speed']
         self.max_speed = params['max_speed']
-        self.obs_size = int(self.obs_range/self.lidar_bin)
+        self.obs_size = [params['obs_size'][0], params['obs_size'][1]] # MOD: height, width
+        self.actor_filters = ['sensor.other.collision', 'sensor.camera.rgb', 'vehicle.*']
 
         # Action Space
         self.discrete = params['discrete']
@@ -43,12 +42,12 @@ class CarlaEnv(Env):
             self.action_space = spaces.Discrete(self.n_steer)
         else:
             self.action_space = spaces.Box(
-            np.float32(np.array([params['continuous_steer_range'][0]])),
-            np.float32(np.array([params['continuous_steer_range'][1]])), dtype=np.float32)
+        np.float32(np.array([params['continuous_steer_range'][0]])),
+        np.float32(np.array([params['continuous_steer_range'][1]])), dtype=np.float32)
 
         # Observation Space
         observation_space_dict = {
-        'camera': spaces.Box(low=0, high=255, shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8)
+        'camera': spaces.Box(low=0, high=255, shape=(self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
         }
         self.observation_space = spaces.Dict(observation_space_dict)
         
@@ -78,12 +77,12 @@ class CarlaEnv(Env):
         self.model3 = self.blueprint_library.filter("model3")[0]
 
         # RGB Camera Sensor
-        self.cam_img = np.zeros((self.obs_size, self.obs_size, 3), dtype=np.uint8)
+        self.cam_img = np.zeros((self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
         self.cam_bp = self.blueprint_library.find('sensor.camera.rgb')
         self.cam_trans = carla.Transform(carla.Location(x=2.5, z=0.7))
         # Configure RGB Camera Attributes
-        self.cam_bp.set_attribute("image_size_x", f"{self.obs_size}")
-        self.cam_bp.set_attribute("image_size_y", f"{self.obs_size}")
+        self.cam_bp.set_attribute("image_size_x", f"{self.obs_size[1]}")
+        self.cam_bp.set_attribute("image_size_y", f"{self.obs_size[0]}")
         self.cam_bp.set_attribute("fov", "110")
         self.cam_bp.set_attribute('sensor_tick', '0.01')
 
@@ -116,11 +115,19 @@ class CarlaEnv(Env):
         self.collision_sensor = None
         self.laneInv_sensor = None
         
+        # Clear Sensors History
+        self.collision_hist = []        
+        self.laneInv_list = []
+
+        # Delete sensors, vehicles and walkers
+        self.destroy_actors()
+        
         # Spawn Ego Vehicle 
         ego_trans = random.choice(self.world.get_map().get_spawn_points())
         self.ego_vehicle = self.world.spawn_actor(self.model3, ego_trans)
         self.ego_vehicle.role_name = "ego_vehicle"
         self.actor_list.append(self.ego_vehicle)
+        time.sleep(3)
         
         # Spawn RGB Camera
         self.camera_sensor = self.world.spawn_actor(self.cam_bp, self.cam_trans, attach_to=self.ego_vehicle)
@@ -131,10 +138,11 @@ class CarlaEnv(Env):
         def get_cam_img(data):
             """
             Process RGB camera data"""
-            i = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
+            i = np.frombuffer(data.raw_data, dtype=np.dtype("uint8"))
             i2 = np.reshape(i, (data.height, data.width, 4))
             i3 = i2[:, :, :3]
             # i3 = i3[:, :, ::-1] # reverse sequence
+            self.cam_img = i3
             if CarlaEnv.show_preview:
                 cv2.imshow("", i3)
                 cv2.waitKey(1)
@@ -145,7 +153,7 @@ class CarlaEnv(Env):
         self.actor_list.append(self.col_sensor)
         self.col_sensor.listen(lambda event: get_col_hist(event))
         
-        # Collision Sensor
+        # Collision Sensor Callback
         def get_col_hist(event):
             """
             Add impulse to collision history"""
@@ -167,10 +175,7 @@ class CarlaEnv(Env):
             self.laneInv_list.append(event.timestamp)
 
         # Set Spectator Navigation (Location)
-        spectator = self.world.get_spectator()
-        ego_trans.location.z += 3 # ABOVE vehicle
-        ego_trans.rotation.pitch -= 30 
-        spectator.set_transform(ego_trans)
+        self._set_spectator()
         
         # Wait till camera ready
         while self.cam_bp is None:
@@ -196,10 +201,15 @@ class CarlaEnv(Env):
         act = carla.VehicleControl(throttle=0.6, steer= steer*CarlaEnv.steer_amp)
         self.ego_vehicle.apply_control(act)
         
+        # Set Spectator Navigation (Location)
+        self._set_spectator()
+
+        info = self._get_info()
+
         # Update timesteps
         self.time_step += 1
 
-        return self._get_obs(), self._get_reward(), self._terminal(), False, self._get_info()
+        return self._get_obs(), self._get_reward(), self._terminal(), False, info
   
     
 
@@ -212,9 +222,12 @@ class CarlaEnv(Env):
     def destroy_actors(self) -> None:
         """
         Destroy all actors in the actor_list"""
-        for actor in self.actor_list:
-            actor.destroy()
-
+        for actor_filter in self.actor_filters:
+            for actor in self.world.get_actors().filter(actor_filter):
+                if actor.is_alive:
+                    if actor.type_id == 'controller.ai.walker':
+                        actor.stop()
+                actor.destroy()
         print("\nAll Actors Destroyed")
     
 
@@ -225,13 +238,28 @@ class CarlaEnv(Env):
         sys.exit()
 
 
+    def _set_spectator(self, transform=None) -> None:
+        """
+        Focuses world spectator at ego vehilce"""
+        spect = self.world.get_spectator()
+        if transform == None:
+            transform = self.ego_vehicle.get_transform()
+            transform.location.z += 3 # ABOVE vehicle
+            transform.rotation.pitch -= 30 # LOOK down
+        spect.set_transform(transform)
+
+
 
     def _get_obs(self):
         """
         Get the observations"""
-        camera = resize(self.cam_img, (self.obs_size, self.obs_size)) * 255
+        
+        camera = resize(self.cam_img, (self.obs_size[0], self.obs_size[1])) * 255
+        # obs = {
+        # 'camera':camera.astype(np.uint8),        
+        # }
         obs = {
-        'camera':camera.astype(np.uint8),        
+        'camera':self.cam_img,        
         }
 
         return obs
@@ -268,15 +296,18 @@ class CarlaEnv(Env):
         """
         Check whether to terminate the current episode."""
         # If collides
-        if len(self.collision_hist) != 0:
+        if len(self.collision_hist) > 0:
+            print("\nVehicle Collided")
             return True
         
-        # If out of lane
-        if len(self.laneInv_list) > 0:
-            return True
+        # # If out of lane
+        # if len(self.laneInv_list) > 0:
+        #     print("\nLane Invasion")
+        #     return True
         
         # If reach maximum timestep
         if self.time_step > self.max_time_episode:
+            print("\nTimeout")
             return True
         
         return False
@@ -284,4 +315,4 @@ class CarlaEnv(Env):
 
 
     def _get_info(self):
-        return {}
+        return {'Collision': self.collision_hist, 'LaneInv': self.laneInv_list}
