@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from torchvision import transforms
 
 
-def generate_model_evaluation(frames, agent_angles, model_angles):
+def generate_model_evaluation(frames, agent_angles, model_angles, pkg_dir):
     """
     Create CSV file of dataset labels (Steering Angles in Deg)"""
     frame_lst = []

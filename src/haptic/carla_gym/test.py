@@ -152,14 +152,14 @@ def main():
             # print(f"Final Score: {score}")
 
     except KeyboardInterrupt:
-        generate_model_evaluation(frames, agent_angles, model_angles)
+        generate_model_evaluation(frames, agent_angles, model_angles, pkg_dir)
 
         if env != None:
             env.destroy_actors()
         print("\n>>> Cancelled by user. Bye!\n")
 
     finally:
-        generate_model_evaluation(frames, agent_angles, model_angles)
+        generate_model_evaluation(frames, agent_angles, model_angles, pkg_dir)
         if env != None:
             env.destroy_actors()
         print("\n>>> Cancelled by user. Bye!\n")
