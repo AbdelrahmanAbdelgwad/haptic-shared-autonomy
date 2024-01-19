@@ -13,6 +13,7 @@ import numpy as np
 from gym import Env, spaces
 from gym.utils import seeding
 from skimage.transform import resize
+from agents.navigation.basic_agent import BasicAgent
 
 
 
@@ -28,6 +29,7 @@ class CarlaEnv(Env):
 
     def __init__(self, params):
         # Parameters
+        self.throttle_val = 0.5
         self.max_time_episode = params['max_time_episode']
         self.min_speed = params['min_speed']
         self.max_speed = params['max_speed']
@@ -58,8 +60,8 @@ class CarlaEnv(Env):
         while True:
             try:
                 self.client = carla.Client('localhost', 2000)
-                self.client.set_timeout(5.0)
-                self.world = self.client.get_world()
+                self.client.set_timeout(5.0)                
+                self.world = self.client.load_world('Town07')
                 print("\n" + u'\u2713'*3 + " Connected Successfully")
                 break
             except RuntimeError:
@@ -127,6 +129,9 @@ class CarlaEnv(Env):
         self.ego_vehicle = self.world.spawn_actor(self.model3, ego_trans)
         self.ego_vehicle.role_name = "ego_vehicle"
         self.actor_list.append(self.ego_vehicle)
+        # Turn Ego-vehicle into Basic Agent
+        self.agent = BasicAgent(self.ego_vehicle)
+        self.agent.ignore_traffic_lights(active=True)
         time.sleep(3)
         
         # Spawn RGB Camera
@@ -198,7 +203,7 @@ class CarlaEnv(Env):
             steer = action[0]
 
         # Apply Control
-        act = carla.VehicleControl(throttle=0.6, steer= steer*CarlaEnv.steer_amp)
+        act = carla.VehicleControl(throttle=self.throttle_val, steer= steer*CarlaEnv.steer_amp)
         self.ego_vehicle.apply_control(act)
         
         # Set Spectator Navigation (Location)
