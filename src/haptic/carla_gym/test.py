@@ -86,7 +86,7 @@ def main():
     # parameters for the carla_gym environment
     params = {
         "max_time_episode": 1000,  # maximum timesteps per episode
-        "obs_size": [480, 640],  # observation (image) size[height,width]
+        "obs_size": [66, 200],  # observation (image) size[height,width]
         "min_speed": 10,  # desired minimum eg vehicle speed (Km/Hr)
         "max_speed": 15,  # desired maximum eg vehicle speed (Km/Hr)
         "discrete": False,  # whether to use discrete control space
@@ -115,7 +115,7 @@ def main():
             while not done:
                 if not evaluate_model:
                     model_steer = predict_steering_angle(
-                        obs["camera"],
+                        obs,
                         model,
                         device,
                     )  # random action selection
@@ -129,7 +129,7 @@ def main():
                 else:
                     # Model Commands
                     model_steer = predict_steering_angle(
-                        obs["camera"]
+                        obs
                     )  # random action selection
                     # model_steer = 0
                     model_angles.append(model_steer)

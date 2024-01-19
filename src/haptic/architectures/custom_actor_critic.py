@@ -19,7 +19,7 @@ from haptic.callbacks.car_racing_callbacks import (
     SaveBestModelCallback,
     PeriodicSaveModelCallback,
 )
-from nvidia_arch import NetworkNvidia
+from haptic.architectures.nvidia_arch import NetworkNvidia
 
 
 class CNNFeatureExtractor(BaseFeaturesExtractor):

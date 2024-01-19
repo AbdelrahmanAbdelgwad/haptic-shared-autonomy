@@ -14,9 +14,33 @@ from gym import Env, spaces
 from gym.utils import seeding
 from skimage.transform import resize
 from agents.navigation.basic_agent import BasicAgent
+from torchvision import transforms
+from PIL import Image
 
 
+# initiate class for preprocessing the image received from the camera
+class PreprocessImage(object):
+    def __init__(self):
+        self.transform = transforms.Compose(
+            [
+                transforms.Lambda(
+                    lambda img: transforms.functional.to_pil_image(img)
+                    if not isinstance(img, Image.Image)
+                    else img
+                ),
+                transforms.Lambda(
+                    lambda img: transforms.functional.crop(
+                        img, top=220, left=0, height=260, width=640
+                    )
+                ),  # Adjust as needed
+                transforms.Resize((66, 200)),  # Adjust as needed
+                transforms.ToTensor(),
+                # transforms.Lambda(lambda img: (img * 2.0) - 1.0),
+            ]
+        )
 
+    def __call__(self, image):
+        return self.transform(image)
 
 # ==============================================================================
 # -- Carla-Env Class -----------------------------------------------------------
@@ -34,6 +58,7 @@ class CarlaEnv(Env):
         self.min_speed = params['min_speed']
         self.max_speed = params['max_speed']
         self.obs_size = [params['obs_size'][0], params['obs_size'][1]] # MOD: height, width
+        self.cam_size = [params['cam_size'][0], params['cam_size'][1]]
         self.actor_filters = ['sensor.other.collision', 'sensor.camera.rgb', 'vehicle.*']
 
         # Action Space
@@ -45,14 +70,16 @@ class CarlaEnv(Env):
         else:
             self.action_space = spaces.Box(
         np.float32(np.array([params['continuous_steer_range'][0]])),
-        np.float32(np.array([params['continuous_steer_range'][1]])), dtype=np.float32)
+        np.float32(np.array([params['continuous_steer_range'][1]])), 
+        shape= (1,), dtype=np.float32)
 
         # Observation Space
-        observation_space_dict = {
-        'camera': spaces.Box(low=0, high=255, shape=(self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
-        }
-        self.observation_space = spaces.Dict(observation_space_dict)
-        
+        # observation_space_dict = {
+        # 'camera': spaces.Box(low=0, high=255, shape=(self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
+        # }
+        # self.observation_space = spaces.Dict(observation_space_dict)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(3, self.obs_size[0], self.obs_size[1]), dtype=np.uint8)
+
         # Connect to Carla server        
         print("\nConneting To Simulator ...\n")
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -79,12 +106,12 @@ class CarlaEnv(Env):
         self.model3 = self.blueprint_library.filter("model3")[0]
 
         # RGB Camera Sensor
-        self.cam_img = np.zeros((self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
+        self.cam_img = np.zeros((self.cam_size[0], self.cam_size[1], 3), dtype=np.uint8)
         self.cam_bp = self.blueprint_library.find('sensor.camera.rgb')
         self.cam_trans = carla.Transform(carla.Location(x=2.5, z=0.7))
         # Configure RGB Camera Attributes
-        self.cam_bp.set_attribute("image_size_x", f"{self.obs_size[1]}")
-        self.cam_bp.set_attribute("image_size_y", f"{self.obs_size[0]}")
+        self.cam_bp.set_attribute("image_size_x", f"{self.cam_size[1]}")
+        self.cam_bp.set_attribute("image_size_y", f"{self.cam_size[0]}")
         self.cam_bp.set_attribute("fov", "110")
         self.cam_bp.set_attribute('sensor_tick', '0.01')
 
@@ -106,6 +133,8 @@ class CarlaEnv(Env):
         # Record the time of total steps and resetting steps
         self.reset_step = 0
         self.total_step = 0
+
+        self.preprocess_image = PreprocessImage()
     
 
     
@@ -259,15 +288,30 @@ class CarlaEnv(Env):
         """
         Get the observations"""
         
-        camera = resize(self.cam_img, (self.obs_size[0], self.obs_size[1])) * 255
+        # camera = resize(self.cam_img, (self.obs_size[0], self.obs_size[1])) * 255
         # obs = {
         # 'camera':camera.astype(np.uint8),        
         # }
-        obs = {
-        'camera':self.cam_img,        
-        }
-
+        # obs = {
+        # 'camera':self.cam_img,        
+        # }
+        # cv2.imwrite("cam_image.jpg",  self.cam_img)
+        # print(self.cam_img.shape)
+        obs = self.preprocess_image(self.cam_img)
+        # obs_img = np.transpose(obs, (1, 2, 0))
+        # print(f"\n{obs.shape}\n")
+        # print(f"\n{type(obs)}\n")
+        # # obs = np.transpose(obs, (1, 2, 0))
+        # # img = np.array([obs[0].numpy(), obs[1].numpy(), obs[2].numpy()])
+        # img = obs_img.numpy()
+        # print(np.max(img))
+        # output = 0 + ((255 - 0) / (1 - -1)) * (img - -1)
+        # print(type(img))
+        # print(img.shape)
+        # print(np.max(output))
+        # cv2.imwrite("observation.jpg",  output)
         return obs
+        # return obs
         
         
 
@@ -291,8 +335,9 @@ class CarlaEnv(Env):
         if len(self.laneInv_list) != 0:
             r_out = -1
         
-        reward = 200*r_collision + 10*r_speed + 1*r_out
-        
+        r_speed = 0
+        # reward = 200*r_collision + 10*r_speed + 1*r_out
+        reward = r_collision + 0.2*r_out
         return reward
     
     
