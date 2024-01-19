@@ -12,6 +12,7 @@ import torch.nn as nn
 from PIL import Image
 import matplotlib.pyplot as plt
 from torchvision import transforms
+from haptic.carla_gym.carla_env import CarlaEnv
 
 
 # # ==============================================================================
@@ -197,10 +198,11 @@ def main():
         "discrete_steer": [-0.2, 0.0, 0.2],  # discrete value of steering angles
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
     }
-
+    
     try:
         # Set carla-gym environment
-        env = gym.make("Carla-v0", params=params)
+        # env = gym.make("Carla-v0", params=params)
+        env = CarlaEnv(params=params)
         episodes = 5
         frames = 1
         agent_angles = []
