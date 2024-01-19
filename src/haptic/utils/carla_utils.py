@@ -2,9 +2,7 @@ import os
 import csv
 import numpy as np
 import pandas as pd
-from PIL import Image
 import matplotlib.pyplot as plt
-from torchvision import transforms
 
 
 def generate_model_evaluation(frames, agent_angles, model_angles, pkg_dir):
@@ -63,43 +61,13 @@ def generate_model_evaluation(frames, agent_angles, model_angles, pkg_dir):
     plt.savefig(os.path.join(pkg_dir, "auto_pilotVsnvidia.png"))
 
 
-# # ==============================================================================
-# # -- Model Deployment ----------------------------------------------------------
-# # ==============================================================================
-
-
 # initiate class for preprocessing the image received from the camera
-class PreprocessImage(object):
-    def __init__(self):
-        self.transform = transforms.Compose(
-            [
-                transforms.Lambda(
-                    lambda img: transforms.functional.to_pil_image(img)
-                    if not isinstance(img, Image.Image)
-                    else img
-                ),
-                transforms.Lambda(
-                    lambda img: transforms.functional.crop(
-                        img, top=220, left=0, height=260, width=640
-                    )
-                ),  # Adjust as needed
-                transforms.Resize((66, 200)),  # Adjust as needed
-                transforms.ToTensor(),
-                transforms.Lambda(lambda img: (img * 2.0) - 1.0),
-            ]
-        )
-
-    def __call__(self, image):
-        return self.transform(image)
-
-
-# initiate class for preprocessing the image received from the camera
-preprocess_image = PreprocessImage()
+# preprocess_image = PreprocessImage()
 
 
 # predict the steering angle
 def predict_steering_angle(image, model, device):
-    image = preprocess_image(image)
+    # image = preprocess_image(image)
     image = image.unsqueeze(0)
     image = image.to(device)
     steering_angle = model(image)
