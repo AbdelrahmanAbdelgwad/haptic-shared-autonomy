@@ -1,5 +1,7 @@
 training_folder
 videos
+DQN_Copilot*
+MLP_V*
 
 pybox2d_dev
 .pylintrc
