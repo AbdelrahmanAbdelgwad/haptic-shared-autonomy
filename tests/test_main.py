@@ -1,4 +1,3 @@
-from gym.envs.box2d.car_racing import CarRacing
 from gym.envs.box2d.car_racing import map_val
 
 
