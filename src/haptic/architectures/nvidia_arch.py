@@ -44,6 +44,7 @@ class NetworkNvidia(nn.Module):
             nn.ELU(),
             nn.Conv2d(64, 64, 3),
             nn.Dropout(0.5),
+            nn.Flatten(),
         )
         self.linear_layers = nn.Sequential(
             nn.Linear(in_features=1152, out_features=100),
@@ -56,9 +57,44 @@ class NetworkNvidia(nn.Module):
 
     def forward(self, input):
         """Forward pass."""
-        print(input.shape)
         output = self.conv_layers(input)
-        print(output.shape)
-        # output = output.view(output.size(0), -1)
+        output = output.view(output.size(0), -1)
+        output = self.linear_layers(output)
+        return output
+
+
+class NetworkNvidiaDQN(nn.Module):
+    """NVIDIA model used in the paper."""
+
+    def __init__(self):
+        """Initialize NVIDIA model."""
+
+        super(NetworkNvidia, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(3, 24, 5, stride=2),
+            nn.ELU(),
+            nn.Conv2d(24, 36, 5, stride=2),
+            nn.ELU(),
+            nn.Conv2d(36, 48, 5, stride=2),
+            nn.ELU(),
+            nn.Conv2d(48, 64, 3),
+            nn.ELU(),
+            nn.Conv2d(64, 64, 3),
+            nn.Dropout(0.5),
+            nn.Flatten(),
+        )
+        self.linear_layers = nn.Sequential(
+            nn.Linear(in_features=1152, out_features=100),
+            nn.ELU(),
+            nn.Linear(in_features=100, out_features=50),
+            nn.ELU(),
+            nn.Linear(in_features=50, out_features=11),  # 11 actions -> 11 Q-values
+            # nn.Linear(in_features=10, out_features=1),
+        )
+
+    def forward(self, input):
+        """Forward pass."""
+        output = self.conv_layers(input)
+        output = output.view(output.size(0), -1)
         output = self.linear_layers(output)
         return output

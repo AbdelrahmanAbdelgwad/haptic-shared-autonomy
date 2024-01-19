@@ -41,7 +41,7 @@ class CNNFeatureExtractor(BaseFeaturesExtractor):
         return flatten_output
 
 
-class CustomNetwork(nn.Module):
+class CustomNetworkActorCritic(nn.Module):
     """
     Custom network for policy and value function.
     It receives as input the features extracted by the feature extractor.
@@ -57,7 +57,7 @@ class CustomNetwork(nn.Module):
         last_layer_dim_pi: int = 1,
         last_layer_dim_vf: int = 1,
     ):
-        super(CustomNetwork, self).__init__()
+        super(CustomNetworkActorCritic, self).__init__()
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
@@ -78,6 +78,12 @@ class CustomNetwork(nn.Module):
             If all layers are shared, then ``latent_policy == latent_value``
         """
         return self.policy_net(features), self.value_net(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        return self.policy_net(features)
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        return self.value_net(features)
 
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
@@ -105,7 +111,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         self.ortho_init = False
 
     def _build_mlp_extractor(self) -> None:
-        self.mlp_extractor = CustomNetwork(self.features_dim)
+        self.mlp_extractor = CustomNetworkActorCritic(self.features_dim)
 
 
 if __name__ == "__main__":
@@ -177,7 +183,7 @@ if __name__ == "__main__":
     )
     model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
 
-    model.save("ddpg_car_racing")
+    model.save("actor_critic_car_racing")
 
     # action_noise = OrnsteinUhlenbeckActionNoise(
     #     mean=np.array([0]),
