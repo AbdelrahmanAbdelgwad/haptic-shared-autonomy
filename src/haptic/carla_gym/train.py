@@ -1,3 +1,21 @@
+import os
+
+
+from time import time
+from datetime import date
+import os
+from stable_baselines3.common.callbacks import CallbackList
+from stable_baselines3 import PPO
+from haptic.callbacks.car_racing_callbacks import (
+    SaveBestModelCallback,
+    PeriodicSaveModelCallback,
+)
+from haptic.architectures.custom_actor_critic import (
+    CustomActorCriticPolicy,
+    CNNFeatureExtractor,
+)
+from haptic.carla_gym.carla_env import CarlaEnv
+
 if __name__ == "__main__":
     # Env Params
     GRAYSCALE = 0  # 0 for RGB, 1 for Grayscale
@@ -22,18 +40,16 @@ if __name__ == "__main__":
     train_folder_output_path = f"{OUTPUT_PATH}/{date_str}_{time()}"
     os.makedirs(train_folder_output_path)
 
-    env = CarRacing(
-        allow_reverse=False,
-        grayscale=GRAYSCALE,
-        show_info_panel=SHOW_INFO_PANEL,
-        discretize_actions=DISCRITIZED_ACTIONS,
-        num_tracks=NUM_TRACKS,
-        num_lanes=NUM_LANES,
-        num_lanes_changes=NUM_LANES_CHANGES,
-        max_time_out=MAX_TIME_OUT,
-        frames_per_state=FRAMES_PER_STATE,
-        nvidia=NVIDIA,
-    )
+    params = {
+        "max_time_episode": 1000,  # maximum timesteps per episode
+        "obs_size": [480, 640],  # observation (image) size[height,width]
+        "min_speed": 10,  # desired minimum eg vehicle speed (Km/Hr)
+        "max_speed": 15,  # desired maximum eg vehicle speed (Km/Hr)
+        "discrete": False,  # whether to use discrete control space
+        "discrete_steer": [-0.2, 0.0, 0.2],  # discrete value of steering angles
+        "continuous_steer_range": [-1, 1],  # continuous steering angle range
+    }
+    env = CarlaEnv(params=params)
 
     policy_kwargs = dict(
         features_extractor_class=CNNFeatureExtractor,
