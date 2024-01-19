@@ -50,15 +50,20 @@ ALPHA_SCHEDULE = [1]  # [0.0,..., 0.5,..., 1.0]
 
 # Training Params
 LOAD_MODEL = False  # True if you want to load a model
-MODEL_NAME = ""  # Name of the copilot model to load if the above is True
+MODEL_NAME = "/home/mtr-pbl/haptic/haptic-shared-autonomy/best_model.zip"  # Name of the copilot model to load if the above is True
 
-TIME_STEPS = 100  # number of timesteps to train for
+TIME_STEPS = 800_000  # number of timesteps to train for
 LOG_INTERVAL = 20  # number of timesteps between each log
-BUFFER_SIZE = 50_000  # size of the replay buffer
-EVAL_FREQ = 500  # number of timesteps between each evaluation
+BUFFER_SIZE = 30_000  # size of the replay buffer
+EVAL_FREQ = 5000  # number of timesteps between each evaluation
 RENDER_EVAL = False  # True if you want to render the evaluation
 OUTPUT_PATH = "./training_folder"  # path to save the training folder
-MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
+MODEL_SAVE_FREQ = 50_000  # number of timesteps between each model save
+LEARNING_RATE=0.00001
+#  EXPLORATION_RATE=
+#  EXPLORATION_INITIAL_EPS =
+#  EXPLORATION_FINAL_EPS =
+PATH_TENSORBOARD="./MLP_V_Copilot_tensorboard_trial/"
 
 
 # PID Params
@@ -122,6 +127,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
                 model.q_net.load_state_dict(state_dict)
                 model.q_net_target.load_state_dict(state_dict)
@@ -132,6 +142,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
 
         elif policy_type == "CNN":
@@ -144,6 +159,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
                 model.q_net.load_state_dict(state_dict)
                 model.q_net_target.load_state_dict(state_dict)
@@ -155,6 +175,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
 
         elif policy_type == "Mlp":
@@ -167,6 +192,11 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
                 model.q_net.load_state_dict(state_dict)
                 model.q_net_target.load_state_dict(state_dict)
@@ -178,7 +208,14 @@ def main():
                     buffer_size=BUFFER_SIZE,
                     verbose=1,
                     device="cuda",
+                    learning_rate = LEARNING_RATE,
+                    # exploration_fraction = EXPLORATION_RATE,
+                    # exploration_initial_eps= EXPLORATION_INITIAL_EPS ,
+                    # exploration_final_eps = EXPLORATION_FINAL_EPS ,
+                    tensorboard_log=PATH_TENSORBOARD
                 )
+
+
 
         save_best_model_callback = SaveBestModelCallback(
             eval_env=env,
@@ -294,7 +331,7 @@ def main():
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            action, _ = model.predict(observation)
+                            action, _ = model.predict(observation,device='cuda:1')
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
@@ -360,7 +397,7 @@ def main():
                             episode_timesteps += 1
                             total_timesteps += 1
                             env.render()
-                            action, _ = model.predict(observation)
+                            action, _ = model.predict(observation,device='cuda:1')
                             observation, reward, done, info = env.step(action)
                             episode_reward += reward
                             total_reward += reward
