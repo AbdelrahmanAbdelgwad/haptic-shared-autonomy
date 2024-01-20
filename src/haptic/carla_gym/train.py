@@ -29,10 +29,10 @@ pkg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 if __name__ == "__main__":
     BUFFER_SIZE = 60_000
     TOTAL_TIMESTEPS = 1000_000
-    EVAL_FREQ = 1_000  # number of timesteps between each evaluation
+    EVAL_FREQ = 50_000  # number of timesteps between each evaluation
     RENDER_EVAL = False  # True if you want to render the evaluation
     OUTPUT_PATH = "./training_folder"  # path to save the training folder
-    MODEL_SAVE_FREQ = 100_000  # number of timesteps between each model save
+    MODEL_SAVE_FREQ = 10_000  # number of timesteps between each model save
 
     today = date.today()
     date_str = today.strftime("%b-%d-%Y")
@@ -76,7 +76,6 @@ if __name__ == "__main__":
         sde_sample_freq=-1,
         target_kl=None,
         tensorboard_log=None,
-        create_eval_env=False,
         verbose=0,
         seed=None,
         device="auto",
@@ -95,6 +94,7 @@ if __name__ == "__main__":
     save_model_callback = PeriodicSaveModelCallback(
         save_frequency=MODEL_SAVE_FREQ,
         save_path=f"{train_folder_output_path}/models",
+        verbose=1
     )
     callbacks = CallbackList([save_best_model_callback, save_model_callback])
 
