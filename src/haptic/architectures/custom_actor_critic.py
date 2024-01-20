@@ -178,9 +178,7 @@ if __name__ == "__main__":
         save_path=f"{train_folder_output_path}/models",
     )
     callbacks = CallbackList([save_best_model_callback, save_model_callback])
-    comment = input(
-        "If you like to add a comment for the training add it here please: \n"
-    )
+
     model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
 
     model.save("actor_critic_car_racing")
