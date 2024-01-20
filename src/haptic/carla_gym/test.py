@@ -92,6 +92,7 @@ def main():
         "discrete": False,  # whether to use discrete control space
         "discrete_steer": [-0.2, 0.0, 0.2],  # discrete value of steering angles
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
+        "scenario": "test",
     }
 
     try:
@@ -128,9 +129,7 @@ def main():
 
                 else:
                     # Model Commands
-                    model_steer = predict_steering_angle(
-                        obs
-                    )  # random action selection
+                    model_steer = predict_steering_angle(obs)  # random action selection
                     # model_steer = 0
                     model_angles.append(model_steer)
 

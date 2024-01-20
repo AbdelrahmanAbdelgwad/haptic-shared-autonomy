@@ -5,7 +5,7 @@ import os
 import torch
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3 import PPO
-from haptic.callbacks.car_racing_callbacks import (
+from haptic.callbacks.carla_callbacks import (
     SaveBestModelCallback,
     PeriodicSaveModelCallback,
 )
@@ -47,7 +47,8 @@ if __name__ == "__main__":
         "discrete": False,  # whether to use discrete control space
         "discrete_steer": [-0.2, 0.0, 0.2],  # discrete value of steering angles
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
-        "cam_size": [480,640],
+        "cam_size": [480, 640],
+        "scenario": "train",
     }
     env = CarlaEnv(params=params)
 
@@ -72,7 +73,7 @@ if __name__ == "__main__":
         save_path=f"{train_folder_output_path}/models",
     )
     callbacks = CallbackList([save_best_model_callback, save_model_callback])
-    
+
     model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
 
     model.save("actor_critic_carla")
