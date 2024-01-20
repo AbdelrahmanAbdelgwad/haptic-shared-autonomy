@@ -29,7 +29,7 @@ pkg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 if __name__ == "__main__":
     BUFFER_SIZE = 60_000
     TOTAL_TIMESTEPS = 1000_000
-    EVAL_FREQ = 100_000  # number of timesteps between each evaluation
+    EVAL_FREQ = 1_000  # number of timesteps between each evaluation
     RENDER_EVAL = False  # True if you want to render the evaluation
     OUTPUT_PATH = "./training_folder"  # path to save the training folder
     MODEL_SAVE_FREQ = 100_000  # number of timesteps between each model save
