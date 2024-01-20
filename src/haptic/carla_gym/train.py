@@ -60,6 +60,7 @@ if __name__ == "__main__":
     model = PPO(
         CustomActorCriticPolicy,
         env,
+        policy_kwargs=policy_kwargs,
         learning_rate=0.0003,
         n_steps=2048,
         batch_size=64,
@@ -76,12 +77,10 @@ if __name__ == "__main__":
         target_kl=None,
         tensorboard_log=None,
         create_eval_env=False,
-        policy_kwargs=None,
         verbose=0,
         seed=None,
         device="auto",
         _init_setup_model=True,
-        policy_kwargs=policy_kwargs,
     )
 
     save_best_model_callback = SaveBestModelCallback(
