@@ -125,15 +125,17 @@ def run_n_episodes(
     Returns:
         DataFrame: Logs for evaluation episodes.
     """
-    env.statistics["scenario"] = "robot_env_test"
+    env.statistics["scenario"] = "test"
     for episode in range(num_eposides):
-        obs = env.reset()
+        obs, _= env.reset()
         done = False
         test_steps = 0
         while not done:
             test_steps += 1
+            obs = obs.numpy()
+            print(f"\n{type(obs)}\n")
             action, _ = model.predict(obs, deterministic=True)
-            obs, _, done, _ = env.step(action)
+            obs, _, done, _, _ = env.step(action)
             if test_steps == 0:
                 print(simple_colors.blue(f"test episode {episode}"))
             if done:
@@ -176,11 +178,13 @@ class PeriodicSaveModelCallback(BaseCallback):
         self,
         save_path: Optional[str] = None,
         save_frequency: int = 10_000,  # 50_000
+        verbose: int = 1,
     ) -> None:
         super().__init__()
 
         self.save_frequency = save_frequency
         self.save_path = save_path
+        self.verbose = verbose
         # create folder if not exist
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
