@@ -25,7 +25,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # set the path for the model
 # model_path = "/home/mtr-pbl/haptic/data_sets/best_model_1152_carla_18.pth"
-model_path = "/home/mtr-pbl/haptic/data_sets/1152/best_model_1152_p_10.pth"
+# model_path = "/home/mtr-pbl/haptic/data_sets/best_model_1152_2024-01-21 18:41:37.452398.pth"
+model_path = "/home/mtr-pbl/haptic/data_sets/nvidia_model_linear_2024-01-22 12:12:47.507924/best_model_nvidia_model_linear_2024-01-22 12:12:47.507924.pth"
+# model_path = "/home/mtr-pbl/haptic/data_sets/nvidia_model_linear_100_scale_2024-01-22 13:06:12.238483/best_model_nvidia_model_linear_100_scale_2024-01-22 13:06:12.238483.pth"
 
 pkg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
@@ -37,6 +39,25 @@ class NetworkNvidia(nn.Module):
     """NVIDIA model used in the paper."""
 
     def __init__(self):
+        """Initialize NVIDIA model.
+
+        NVIDIA model used
+            Image normalization to avoid saturation and make gradients work better.
+            Convolution: 5x5, filter: 24, strides: 2x2, activation: ELU
+            Convolution: 5x5, filter: 36, strides: 2x2, activation: ELU
+            Convolution: 5x5, filter: 48, strides: 2x2, activation: ELU
+            Convolution: 3x3, filter: 64, strides: 1x1, activation: ELU
+            Convolution: 3x3, filter: 64, strides: 1x1, activation: ELU
+            Drop out (0.5)
+            Fully connected: neurons: 100, activation: ELU
+            Fully connected: neurons: 50, activation: ELU
+            Fully connected: neurons: 10, activation: ELU
+            Fully connected: neurons: 1 (output)
+
+        the convolution layers are meant to handle feature engineering.
+        the fully connected layer for predicting the steering angle.
+        the elu activation function is for taking care of vanishing gradient problem.
+        """
         super(NetworkNvidia, self).__init__()
         self.conv_layers = nn.Sequential(
             nn.Conv2d(3, 24, 5, stride=2),
@@ -49,6 +70,7 @@ class NetworkNvidia(nn.Module):
             nn.ELU(),
             nn.Conv2d(64, 64, 3),
             nn.Dropout(0.5),
+            nn.Flatten(),
         )
         self.linear_layers = nn.Sequential(
             nn.Linear(in_features=1152, out_features=100),
@@ -56,16 +78,14 @@ class NetworkNvidia(nn.Module):
             nn.Linear(in_features=100, out_features=50),
             nn.ELU(),
             nn.Linear(in_features=50, out_features=10),
-            nn.ELU(),
             nn.Linear(in_features=10, out_features=1),
+            # nn.Tanh(),
         )
 
     def forward(self, input):
         """Forward pass."""
-        input = input.view(-1, 3, 66, 200)
         output = self.conv_layers(input)
-        # print(output.shape)
-        output = output.view(-1, 1152)
+        output = output.view(output.size(0), -1)
         output = self.linear_layers(output)
         return output
 
@@ -93,6 +113,7 @@ def main():
         "discrete_steer": [-0.2, 0.0, 0.2],  # discrete value of steering angles
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
         "scenario": "test",
+        "cam_size": [480, 640],
     }
 
     try:
@@ -100,7 +121,7 @@ def main():
         # env = gym.make("Carla-v0", params=params)
         env = CarlaEnv(params=params)
         episodes = 5
-        frames = 1
+        frames = 0
         agent_angles = []
         model_angles = []
 

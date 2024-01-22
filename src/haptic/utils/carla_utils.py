@@ -72,6 +72,4 @@ def predict_steering_angle(image, model, device):
     image = image.to(device)
     steering_angle = model(image)
     steering_angle = steering_angle.item()
-    steering_angle = steering_angle * 180 / np.pi
-    steering_angle = steering_angle / 540
     return steering_angle

@@ -76,7 +76,7 @@ if __name__ == "__main__":
         sde_sample_freq=-1,
         target_kl=None,
         tensorboard_log=None,
-        verbose=0,
+        verbose=1,
         seed=None,
         device="auto",
         _init_setup_model=True,

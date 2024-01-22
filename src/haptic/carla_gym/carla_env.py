@@ -31,12 +31,12 @@ class PreprocessImage(object):
                 ),
                 transforms.Lambda(
                     lambda img: transforms.functional.crop(
-                        img, top=220, left=0, height=260, width=640
+                        img, top=240, left=0, height=240, width=640
                     )
                 ),  # Adjust as needed
                 transforms.Resize((66, 200)),  # Adjust as needed
                 transforms.ToTensor(),
-                # transforms.Lambda(lambda img: (img * 2.0) - 1.0),
+                transforms.Lambda(lambda img: (img * 2.0) - 1.0),
             ]
         )
 
@@ -104,7 +104,7 @@ class CarlaEnv(Env):
             try:
                 self.client = carla.Client("localhost", 2000)
                 self.client.set_timeout(5.0)
-                self.world = self.client.load_world("Town07")
+                self.world = self.client.load_world("Town01")
                 print("\n" + "\u2713" * 3 + " Connected Successfully")
                 break
             except RuntimeError:
@@ -372,7 +372,7 @@ class CarlaEnv(Env):
             r_out = -1
 
         # reward = 200*r_collision + 10*r_speed + 1*r_out
-        reward = r_collision + 0.2 * r_out
+        reward = 10*r_collision + 0.05 * r_out
         return reward
 
     def _terminal(self):
