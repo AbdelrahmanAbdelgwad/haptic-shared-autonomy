@@ -17,6 +17,7 @@ from skimage.transform import resize
 from agents.navigation.basic_agent import BasicAgent
 from torchvision import transforms
 from PIL import Image
+from haptic.utils.carla_utils import correct_yaw, get_reward_comp, reward_value
 
 
 # initiate class for preprocessing the image received from the camera
@@ -92,7 +93,7 @@ class CarlaEnv(Env):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
-            shape=(3, self.obs_size[0], self.obs_size[1]),
+            shape=(3, self.obs_size[0], self.obs_size[1]),     
             dtype=np.uint8,
         )
 
@@ -104,13 +105,13 @@ class CarlaEnv(Env):
             try:
                 self.client = carla.Client("localhost", 2000)
                 self.client.set_timeout(5.0)
-                self.world = self.client.load_world("Town01")
+                self.world = self.client.load_world("Town04")
                 print("\n" + "\u2713" * 3 + " Connected Successfully")
                 break
             except RuntimeError:
                 print("\u2715" + f" Connection failed, trying again: {i}")
                 i += 1
-
+ 
         # Set weather
         self.world.set_weather(carla.WeatherParameters.ClearNoon)
 
@@ -142,7 +143,8 @@ class CarlaEnv(Env):
         self.laneInv_bp = self.blueprint_library.find("sensor.other.lane_invasion")
         self.laneInv_trans = carla.Transform(carla.Location(x=2.5, z=0.7))
 
-        # Set fixed simulation step for synchronous mode
+        # # Set fixed simulation step for synchronous mode
+        # self.dt = params['dt']
         # self.settings = self.world.get_settings()
         # self.settings.fixed_delta_seconds = self.dt
 
@@ -175,6 +177,9 @@ class CarlaEnv(Env):
         # Clear Sensors History
         self.collision_hist = []
         self.laneInv_list = []
+
+        # # Disable sync mode
+        # self._set_synchronous_mode(False)
 
         # Delete sensors, vehicles and walkers
         self.destroy_actors()
@@ -250,6 +255,9 @@ class CarlaEnv(Env):
         # Update timesteps
         self.total_timesteps = 0
 
+        # # Enable sync mode
+        # self._set_synchronous_mode(True)
+
         return self._get_obs(), self._get_info()
 
     def step(self, action):
@@ -276,7 +284,13 @@ class CarlaEnv(Env):
         self.total_timesteps += 1
         self.episode_steps += 1
 
-        self.reward = self._get_reward()
+        vehicle_location = self.ego_vehicle.get_location()
+        waypoint = self.world.get_map().get_waypoint(vehicle_location, project_to_road=True, 
+                    lane_type=carla.LaneType.Driving)
+        
+        collision = None if len(self.collision_hist) == 0 else 1
+
+        self.reward = self._get_reward(self.ego_vehicle, waypoint, collision, lambda_1=1, lambda_2=1, lambda_3=5)
         self.total_reward += self.reward
         self.episode_reward += self.reward
 
@@ -351,29 +365,36 @@ class CarlaEnv(Env):
         return obs
         # return obs
 
-    def _get_reward(self):
-        """
-        Calculate the step reward"""
-        # Reward for speed tracking (in Km/hr)
-        vel = self.ego_vehicle.get_velocity()
-        speed = int(3.6 * math.sqrt(vel.x**2 + vel.y**2 + vel.z**2))
-        r_speed = 0
-        if speed > self.max_speed or speed < self.min_speed:
-            r_speed = -1
+    # def _get_reward(self):
+    #     """
+    #     Calculate the step reward"""
+    #     # Reward for speed tracking (in Km/hr)
+    #     vel = self.ego_vehicle.get_velocity()
+    #     speed = int(3.6 * math.sqrt(vel.x**2 + vel.y**2 + vel.z**2))
+    #     r_speed = 0
+    #     if speed > self.max_speed or speed < self.min_speed:
+    #         r_speed = -1
 
-        # Reward for collision
-        r_collision = 0
-        if len(self.collision_hist) != 0:
-            r_collision = -1
+    #     # Reward for collision
+    #     r_collision = 0
+    #     if len(self.collision_hist) != 0:
+    #         r_collision = -1
 
-        # Reward for lane invasion
-        r_out = 0
-        if len(self.laneInv_list) != 0:
-            r_out = -1
+    #     # Reward for lane invasion
+    #     r_out = 0
+    #     if len(self.laneInv_list) != 0:
+    #         r_out = -1
 
-        # reward = 200*r_collision + 10*r_speed + 1*r_out
-        reward = 10*r_collision + 0.05 * r_out
+    #     # reward = 200*r_collision + 10*r_speed + 1*r_out
+    #     reward = 10*r_collision + 0.05 * r_out
+    #     return reward
+
+    
+    def _get_reward(self, vehicle, waypoint, collision, lambda_1=1, lambda_2=1, lambda_3=5):
+        cos_yaw_diff, dist, collision = get_reward_comp(vehicle, waypoint, collision)
+        reward = reward_value(cos_yaw_diff, dist, collision, lambda_1=lambda_1, lambda_2=lambda_2, lambda_3=lambda_3)
         return reward
+
 
     def _terminal(self):
         """
@@ -397,3 +418,10 @@ class CarlaEnv(Env):
 
     def _get_info(self):
         return {"Collision": self.collision_hist, "LaneInv": self.laneInv_list}
+    
+    def _set_synchronous_mode(self, synchronous = True):
+        """Set whether to use the synchronous mode.
+        """
+        self.settings.synchronous_mode = synchronous
+        self.world.apply_settings(self.settings)
+

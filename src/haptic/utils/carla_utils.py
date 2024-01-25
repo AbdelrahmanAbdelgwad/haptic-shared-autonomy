@@ -71,5 +71,35 @@ def predict_steering_angle(image, model, device):
     image = image.unsqueeze(0)
     image = image.to(device)
     steering_angle = model(image)
-    steering_angle = steering_angle.item()
+    steering_angle = steering_angle.item()/(540*np.pi/180)
+
     return steering_angle
+
+
+def get_reward_comp(vehicle, waypoint, collision):
+    vehicle_location = vehicle.get_location()
+    x_wp = waypoint.transform.location.x
+    y_wp = waypoint.transform.location.y
+
+    x_vh = vehicle_location.x
+    y_vh = vehicle_location.y
+
+    wp_array = np.array([x_wp, y_wp])
+    vh_array = np.array([x_vh, y_vh])
+
+    dist = np.linalg.norm(wp_array - vh_array)
+
+    vh_yaw = correct_yaw(vehicle.get_transform().rotation.yaw)
+    wp_yaw = correct_yaw(waypoint.transform.rotation.yaw)
+    cos_yaw_diff = np.cos((vh_yaw - wp_yaw)*np.pi/180.)
+
+    collision = 0 if collision is None else 1
+    
+    return cos_yaw_diff, dist, collision
+
+def reward_value(cos_yaw_diff, dist, collision, lambda_1=1, lambda_2=1, lambda_3=5):
+    reward = (lambda_1 * cos_yaw_diff) - (lambda_2 * dist) - (lambda_3 * collision)
+    return reward
+
+def correct_yaw(x):
+    return(((x%360) + 360) % 360)

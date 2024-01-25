@@ -49,6 +49,7 @@ if __name__ == "__main__":
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
         "cam_size": [480, 640],
         "scenario": "train",
+        'dt': 0.1,  # time interval between two frames
     }
     env = CarlaEnv(params=params)
 
@@ -100,4 +101,4 @@ if __name__ == "__main__":
 
     model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
 
-    model.save("actor_critic_carla")
+    model.save(f"{train_folder_output_path}/ppo_carla")

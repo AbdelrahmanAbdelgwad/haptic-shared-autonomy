@@ -26,8 +26,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # set the path for the model
 # model_path = "/home/mtr-pbl/haptic/data_sets/best_model_1152_carla_18.pth"
 # model_path = "/home/mtr-pbl/haptic/data_sets/best_model_1152_2024-01-21 18:41:37.452398.pth"
-model_path = "/home/mtr-pbl/haptic/data_sets/nvidia_model_linear_2024-01-22 12:12:47.507924/best_model_nvidia_model_linear_2024-01-22 12:12:47.507924.pth"
-# model_path = "/home/mtr-pbl/haptic/data_sets/nvidia_model_linear_100_scale_2024-01-22 13:06:12.238483/best_model_nvidia_model_linear_100_scale_2024-01-22 13:06:12.238483.pth"
+model_path = '/home/mtr-pbl/haptic/data_sets/enhanced_model_carla_dataset_2024-01-25 01:04:08.336767/best_model_enhanced_model_carla_dataset_2024-01-25 01:04:08.336767.pth'
 
 pkg_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
@@ -105,7 +104,7 @@ def main():
     env = None
     # parameters for the carla_gym environment
     params = {
-        "max_time_episode": 1000,  # maximum timesteps per episode
+        "max_time_episode": 1_000_000,  # maximum timesteps per episode
         "obs_size": [66, 200],  # observation (image) size[height,width]
         "min_speed": 10,  # desired minimum eg vehicle speed (Km/Hr)
         "max_speed": 15,  # desired maximum eg vehicle speed (Km/Hr)
@@ -114,6 +113,7 @@ def main():
         "continuous_steer_range": [-1, 1],  # continuous steering angle range
         "scenario": "test",
         "cam_size": [480, 640],
+        'dt': 0.1,  # time interval between two frames
     }
 
     try:

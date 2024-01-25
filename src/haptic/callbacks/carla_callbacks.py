@@ -133,7 +133,6 @@ def run_n_episodes(
         while not done:
             test_steps += 1
             obs = obs.numpy()
-            print(f"\n{type(obs)}\n")
             action, _ = model.predict(obs, deterministic=True)
             obs, _, done, _, _ = env.step(action)
             if test_steps == 0:
