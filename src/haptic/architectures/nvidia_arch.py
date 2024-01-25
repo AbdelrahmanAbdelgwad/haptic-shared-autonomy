@@ -53,6 +53,7 @@ class NetworkNvidia(nn.Module):
             nn.ELU(),
             nn.Linear(in_features=50, out_features=10),
             nn.Linear(in_features=10, out_features=1),
+            # nn.Tanh(),
         )
 
     def forward(self, input):
