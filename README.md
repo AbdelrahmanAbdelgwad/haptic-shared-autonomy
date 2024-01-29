@@ -5,6 +5,9 @@ Shared autonomy using haptic feedback as a steering driver assistance system
 In this repo, we are using the gym environment developed by NotAnyMike. You can find it on this link:
 https://notanymike.github.io/Solving-CarRacing/
 
+For the ROS implementation of the testing code, please visit this repository: 
+https://github.com/AbdelrahmanAbdelgwad/haptic-shared-autonomy-ros-pkg
+
 
 ## Setup and Installation
 
